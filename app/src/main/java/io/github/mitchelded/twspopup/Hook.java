@@ -18,6 +18,8 @@ import android.app.Service;
 import android.util.Log;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Field;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -48,6 +50,25 @@ public class Hook implements IXposedHookLoadPackage {
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lp) {
         if (!PKG.equals(lp.packageName)) return;
         L("handleLoadPackage process=" + lp.processName);
+        // Make the app's own (normally silent) logger visible in logcat under tag TwsApp.
+        try {
+            Class<?> rc = XposedHelpers.findClass("ld.r", lp.classLoader);
+            for (Method m : rc.getDeclaredMethods()) {
+                Class<?>[] pt = m.getParameterTypes();
+                if (Modifier.isStatic(m.getModifiers()) && pt.length >= 2
+                        && pt[0] == String.class && pt[1] == String.class) {
+                    XposedBridge.hookMethod(m, new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam p) {
+                            try { Log.i("TwsApp", p.args[0] + ": " + p.args[1]); } catch (Throwable ignored) { }
+                        }
+                    });
+                }
+            }
+            L("app logger hooked");
+        } catch (Throwable t) {
+            L("app logger hook failed: " + t);
+        }
         // Direct trigger: starting this service (am start-foreground-service ... DongleDeviceViewService)
         // now shows the popup with default values.
         try {
@@ -183,7 +204,12 @@ public class Hook implements IXposedHookLoadPackage {
             // repeated call with other parameters is not ignored.
             try { XposedHelpers.callMethod(mgr, "clearPairData"); } catch (Throwable t) { L("clearPairData: " + t); }
             try { XposedHelpers.callMethod(mgr, "unbindPairViewService"); } catch (Throwable t) { L("unbind: " + t); }
+            if (i.hasExtra("charge")) XposedHelpers.callMethod(bean, "setChargeState", i.getIntExtra("charge", 0));
+            if (i.hasExtra("view")) XposedHelpers.callMethod(bean, "setViewState", i.getIntExtra("view", 0));
             XposedHelpers.callMethod(mgr, "onFoundTwsOptionView", bean);
+            // Debug: what the manager actually pushed to the UI process
+            try { L("bean=" + bean); } catch (Throwable t) { L("bean.toString failed: " + t); }
+            try { L("mData=" + XposedHelpers.getObjectField(mgr, "mData")); } catch (Throwable t) { L("mData read failed: " + t); }
             L("onFoundTwsOptionView called, model=" + model);
         } catch (Throwable t) {
             L("show failed: " + t);
