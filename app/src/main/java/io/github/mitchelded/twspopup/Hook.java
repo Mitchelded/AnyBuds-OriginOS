@@ -1,7 +1,12 @@
 package io.github.mitchelded.twspopup;
 
 import android.app.Application;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -105,7 +110,7 @@ public class Hook implements IXposedHookLoadPackage {
             int left = i.getIntExtra("left", 80);
             int right = i.getIntExtra("right", 80);
             int box = i.getIntExtra("box", 100);
-            String name = i.hasExtra("name") ? i.getStringExtra("name") : "vivo TWS 2e";
+            String name = i.hasExtra("name") ? i.getStringExtra("name") : "vivo TWS";
 
             Class<?> beanC = XposedHelpers.findClass(BEAN, cl);
             Object bean;
@@ -121,8 +126,49 @@ public class Hook implements IXposedHookLoadPackage {
                 bean = u.getClass().getMethod("allocateInstance", Class.class).invoke(u, beanC);
             }
 
+            // onFoundTwsOptionView() returns early unless device and bitmapNameBean are non-null.
+            String mac = i.hasExtra("mac") ? i.getStringExtra("mac") : "AA:BB:CC:DD:EE:FF";
+            BluetoothDevice dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(mac);
+            XposedHelpers.setObjectField(bean, "mDevice", dev);
+
+            // Per-model data comes from the app's own assets/tws_config.json
+            String json;
+            try (InputStream in = app.getAssets().open("tws_config.json")) {
+                ByteArrayOutputStream bo = new ByteArrayOutputStream();
+                byte[] buf = new byte[8192]; int n;
+                while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
+                json = bo.toString("UTF-8");
+            }
+            JSONArray arr = new JSONObject(json).getJSONArray("tws_config");
+            JSONObject entry = null;
+            for (int k = 0; k < arr.length(); k++) {
+                if (arr.getJSONObject(k).getInt("model") == model) { entry = arr.getJSONObject(k); break; }
+            }
+            if (entry == null) { L("model " + model + " not found in tws_config.json"); return; }
+            JSONObject bd = entry.getJSONObject("bitmap_data");
+            Object bnb = XposedHelpers.newInstance(XposedHelpers.findClass(
+                    "com.vivo.commonbase.bean.EarbudFastPair$BitmapNameBean", cl));
+            XposedHelpers.callMethod(bnb, "setEnter", bd.getString("enter"));
+            XposedHelpers.callMethod(bnb, "setChange", bd.getString("change"));
+            XposedHelpers.callMethod(bnb, "setCircle", bd.getString("circle"));
+            XposedHelpers.callMethod(bnb, "setConnecting", bd.getString("connecting"));
+            XposedHelpers.callMethod(bnb, "setLeft", bd.getString("left"));
+            XposedHelpers.callMethod(bnb, "setRight", bd.getString("right"));
+            XposedHelpers.callMethod(bnb, "setBox", bd.getString("box"));
+            XposedHelpers.callMethod(bnb, "setFileModel", bd.getInt("file_model"));
+            XposedHelpers.callMethod(bean, "setBitmapNameBean", bnb);
+            try {
+                Class<?> cfgC = XposedHelpers.findClass("com.vivo.commonbase.bean.TwsConfig", cl);
+                Object gson = XposedHelpers.newInstance(XposedHelpers.findClass("com.google.gson.Gson", cl));
+                Object cfg = XposedHelpers.callMethod(gson, "fromJson",
+                        new Class<?>[]{String.class, Class.class}, json, cfgC);
+                XposedHelpers.callMethod(bean, "setTwsConfig", cfg);
+            } catch (Throwable t) {
+                L("setTwsConfig skipped: " + t);
+            }
+
             XposedHelpers.callMethod(bean, "setModel", model);
-            XposedHelpers.callMethod(bean, "setDeviceType", 1);
+            XposedHelpers.callMethod(bean, "setDeviceType", entry.getInt("device_type"));
             XposedHelpers.callMethod(bean, "setLeftBattery", left);
             XposedHelpers.callMethod(bean, "setRightBattery", right);
             XposedHelpers.callMethod(bean, "setBaseBattery", box);
