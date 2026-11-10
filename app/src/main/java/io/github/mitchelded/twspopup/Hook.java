@@ -52,32 +52,51 @@ public class Hook implements IXposedHookLoadPackage {
                 protected void afterHookedMethod(final MethodHookParam p) {
                     final Service sv = (Service) p.thisObject;
                     L("DongleDeviceViewService.onCreate in " + lp.processName);
-                    new Handler(Looper.getMainLooper()).post(() -> show(sv.getApplication(), lp.classLoader, new Intent()));
+                    // The real manager lives in the main process, so forward the request there.
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        sv.sendBroadcast(new Intent(ACTION).setPackage(PKG));
+                        L("forwarded broadcast to main process");
+                    }, 2000);
                 }
             });
         } catch (Throwable t) {
             L("dongle hook failed: " + t);
         }
         if (!PKG.equals(lp.processName)) return;
+        try {
+            XposedHelpers.findAndHookMethod(MGR, lp.classLoader, "getInstance", Application.class, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam p) {
+                    L("getInstance in main process");
+                    register((Application) p.args[0], lp.classLoader);
+                }
+            });
+        } catch (Throwable t) {
+            L("getInstance hook failed: " + t);
+        }
         XposedHelpers.findAndHookMethod(Application.class, "onCreate", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam p) {
-                if (registered) return;
-                registered = true;
-                final Application app = (Application) p.thisObject;
-                final ClassLoader cl = lp.classLoader;
-                BroadcastReceiver r = new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(final Context c, final Intent i) {
-                        new Handler(Looper.getMainLooper()).post(() -> show(app, cl, i));
-                    }
-                };
-                IntentFilter f = new IntentFilter(ACTION);
-                if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(r, f, Context.RECEIVER_EXPORTED);
-                else app.registerReceiver(r, f);
-                L("receiver registered");
+                register((Application) p.thisObject, lp.classLoader);
             }
         });
+    }
+
+
+    static void register(final Application app, final ClassLoader cl) {
+        if (registered) return;
+        registered = true;
+        BroadcastReceiver r = new BroadcastReceiver() {
+            @Override
+            public void onReceive(final Context c, final Intent i) {
+                L("broadcast received");
+                new Handler(Looper.getMainLooper()).post(() -> show(app, cl, i));
+            }
+        };
+        IntentFilter f = new IntentFilter(ACTION);
+        if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(r, f, Context.RECEIVER_EXPORTED);
+        else app.registerReceiver(r, f);
+        L("receiver registered");
     }
 
     static void show(Application app, ClassLoader cl, Intent i) {
