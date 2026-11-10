@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="xposed_scope">
+        <!-- required: the vivo TWS app draws the popup -->
         <item>com.android.vivo.tws.vivotws</item>
+        <!-- optional: only for the automatic popup when chosen earbuds connect -->
+        <item>com.android.bluetooth</item>
     </string-array>
 </resources>

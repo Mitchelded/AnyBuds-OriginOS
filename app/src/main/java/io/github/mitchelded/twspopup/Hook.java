@@ -1,219 +1,30 @@
 package io.github.mitchelded.twspopup;
 
-import android.app.Application;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
-import android.app.Service;
-import android.util.Log;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Field;
-
 import de.robv.android.xposed.IXposedHookLoadPackage;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 /**
- * Runs inside com.android.vivo.tws.vivotws (main process).
- * Registers a receiver; on ACTION it builds a TwsFastPairDeviceBean and hands it to
- * TwsFastPairViewServerManager.onFoundTwsOptionView(), i.e. the same entry point
- * the BLE scan uses when real vivo earbuds open their case.
+ * Module entry point. It only decides which part of the module runs in which process:
+ *
+ *   com.android.vivo.tws.vivotws (main process) - PopupController: shows / updates / closes the popup
+ *   com.android.vivo.tws.vivotws (any process)  - AppLogMirror: optional debug mirror of the app's own log
+ *   com.android.bluetooth                       - BtWatcher: optional "show when my earbuds connect"
  */
 public class Hook implements IXposedHookLoadPackage {
-    static final String PKG = "com.android.vivo.tws.vivotws";
-    static final String ACTION = "io.github.mitchelded.twspopup.SHOW";
-    static final String BEAN = "com.android.vivo.tws.fastpair.bean.TwsFastPairDeviceBean";
-    static final String MGR = "com.android.vivo.tws.fastpair.vipc.TwsFastPairViewServerManager";
-    static boolean registered;
-
-    static void L(String m) {
-        XposedBridge.log("TwsPopup: " + m);
-        Log.i("TwsPopup", m);
-    }
+    static final String BLUETOOTH = "com.android.bluetooth";
 
     @Override
-    public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lp) {
-        if (!PKG.equals(lp.packageName)) return;
-        L("handleLoadPackage process=" + lp.processName);
-        // Make the app's own (normally silent) logger visible in logcat under tag TwsApp.
+    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lp) {
         try {
-            Class<?> rc = XposedHelpers.findClass("ld.r", lp.classLoader);
-            for (Method m : rc.getDeclaredMethods()) {
-                Class<?>[] pt = m.getParameterTypes();
-                if (Modifier.isStatic(m.getModifiers()) && pt.length >= 2
-                        && pt[0] == String.class && pt[1] == String.class) {
-                    XposedBridge.hookMethod(m, new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam p) {
-                            try { Log.i("TwsApp", p.args[0] + ": " + p.args[1]); } catch (Throwable ignored) { }
-                        }
-                    });
-                }
+            if (VivoApi.PACKAGE.equals(lp.packageName)) {
+                if (Props.flag("debug.twspopup.applog")) AppLogMirror.install(lp.classLoader, lp.processName);
+                // The popup manager and its state live in the main process; ":ui" only draws.
+                if (VivoApi.PACKAGE.equals(lp.processName)) PopupController.install(lp.classLoader);
+            } else if (BLUETOOTH.equals(lp.packageName)) {
+                BtWatcher.install();
             }
-            L("app logger hooked");
         } catch (Throwable t) {
-            L("app logger hook failed: " + t);
-        }
-        // Direct trigger: starting this service (am start-foreground-service ... DongleDeviceViewService)
-        // now shows the popup with default values.
-        try {
-            XposedHelpers.findAndHookMethod("com.android.vivo.tws.fastpair.service.DongleDeviceViewService",
-                    lp.classLoader, "onCreate", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(final MethodHookParam p) {
-                    final Service sv = (Service) p.thisObject;
-                    L("DongleDeviceViewService.onCreate in " + lp.processName);
-                    // The real manager lives in the main process, so forward the request there.
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        sv.sendBroadcast(new Intent(ACTION).setPackage(PKG));
-                        L("forwarded broadcast to main process");
-                    }, 2000);
-                }
-            });
-        } catch (Throwable t) {
-            L("dongle hook failed: " + t);
-        }
-        if (!PKG.equals(lp.processName)) return;
-        try {
-            XposedHelpers.findAndHookMethod(MGR, lp.classLoader, "getInstance", Application.class, new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam p) {
-                    L("getInstance in main process");
-                    register((Application) p.args[0], lp.classLoader);
-                }
-            });
-        } catch (Throwable t) {
-            L("getInstance hook failed: " + t);
-        }
-        XposedHelpers.findAndHookMethod(Application.class, "onCreate", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam p) {
-                register((Application) p.thisObject, lp.classLoader);
-            }
-        });
-    }
-
-
-    static void register(final Application app, final ClassLoader cl) {
-        if (registered) return;
-        registered = true;
-        BroadcastReceiver r = new BroadcastReceiver() {
-            @Override
-            public void onReceive(final Context c, final Intent i) {
-                L("broadcast received");
-                new Handler(Looper.getMainLooper()).post(() -> show(app, cl, i));
-            }
-        };
-        IntentFilter f = new IntentFilter(ACTION);
-        if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(r, f, Context.RECEIVER_EXPORTED);
-        else app.registerReceiver(r, f);
-        L("receiver registered");
-    }
-
-    static void show(Application app, ClassLoader cl, Intent i) {
-        try {
-            int model = i.getIntExtra("model", 32);   // 32 = vivo TWS 2e (animations bundled in the APK)
-            int left = i.getIntExtra("left", 80);
-            int right = i.getIntExtra("right", 80);
-            int box = i.getIntExtra("box", 100);
-            String name = i.hasExtra("name") ? i.getStringExtra("name") : "vivo TWS";
-
-            Class<?> beanC = XposedHelpers.findClass(BEAN, cl);
-            Object bean;
-            try {
-                Constructor<?> k = beanC.getDeclaredConstructor(BluetoothDevice.class, BluetoothDevice.class);
-                k.setAccessible(true);
-                bean = k.newInstance((Object) null, (Object) null);
-            } catch (Throwable t) {
-                L("ctor(null,null) failed, using Unsafe: " + t);
-                Field uf = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
-                uf.setAccessible(true);
-                Object u = uf.get(null);
-                bean = u.getClass().getMethod("allocateInstance", Class.class).invoke(u, beanC);
-            }
-
-            // onFoundTwsOptionView() returns early unless device and bitmapNameBean are non-null.
-            String mac = i.hasExtra("mac") ? i.getStringExtra("mac") : "AA:BB:CC:DD:EE:FF";
-            BluetoothDevice dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(mac);
-            XposedHelpers.setObjectField(bean, "mDevice", dev);
-
-            // Per-model data comes from the app's own assets/tws_config.json
-            String json;
-            try (InputStream in = app.getAssets().open("tws_config.json")) {
-                ByteArrayOutputStream bo = new ByteArrayOutputStream();
-                byte[] buf = new byte[8192]; int n;
-                while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
-                json = bo.toString("UTF-8");
-            }
-            JSONArray arr = new JSONObject(json).getJSONArray("tws_config");
-            JSONObject entry = null;
-            for (int k = 0; k < arr.length(); k++) {
-                if (arr.getJSONObject(k).getInt("model") == model) { entry = arr.getJSONObject(k); break; }
-            }
-            if (entry == null) { L("model " + model + " not found in tws_config.json"); return; }
-            JSONObject bd = entry.getJSONObject("bitmap_data");
-            Object bnb = XposedHelpers.newInstance(XposedHelpers.findClass(
-                    "com.vivo.commonbase.bean.EarbudFastPair$BitmapNameBean", cl));
-            XposedHelpers.callMethod(bnb, "setEnter", bd.getString("enter"));
-            XposedHelpers.callMethod(bnb, "setChange", bd.getString("change"));
-            XposedHelpers.callMethod(bnb, "setCircle", bd.getString("circle"));
-            XposedHelpers.callMethod(bnb, "setConnecting", bd.getString("connecting"));
-            XposedHelpers.callMethod(bnb, "setLeft", bd.getString("left"));
-            XposedHelpers.callMethod(bnb, "setRight", bd.getString("right"));
-            XposedHelpers.callMethod(bnb, "setBox", bd.getString("box"));
-            XposedHelpers.callMethod(bnb, "setFileModel", bd.getInt("file_model"));
-            XposedHelpers.callMethod(bean, "setBitmapNameBean", bnb);
-            try {
-                Class<?> cfgC = XposedHelpers.findClass("com.vivo.commonbase.bean.TwsConfig", cl);
-                Object gson = XposedHelpers.newInstance(XposedHelpers.findClass("com.google.gson.Gson", cl));
-                Object cfg = XposedHelpers.callMethod(gson, "fromJson",
-                        new Class<?>[]{String.class, Class.class}, json, cfgC);
-                XposedHelpers.callMethod(bean, "setTwsConfig", cfg);
-            } catch (Throwable t) {
-                L("setTwsConfig skipped: " + t);
-            }
-
-            XposedHelpers.callMethod(bean, "setModel", model);
-            XposedHelpers.callMethod(bean, "setDeviceType", entry.getInt("device_type"));
-            XposedHelpers.callMethod(bean, "setLeftBattery", left);
-            XposedHelpers.callMethod(bean, "setRightBattery", right);
-            XposedHelpers.callMethod(bean, "setBaseBattery", box);
-            XposedHelpers.callMethod(bean, "setDeviceName", name);
-            XposedHelpers.callMethod(bean, "setTitle", name);
-            XposedHelpers.callMethod(bean, "setPairState",
-                    XposedHelpers.getStaticIntField(beanC, "PAIR_STATE_NOT_PAIRING_NOT_CONNECTED"));
-            XposedHelpers.callMethod(bean, "setBaseStateEarbudsCount", 2);
-
-            Object mgr = XposedHelpers.callStaticMethod(XposedHelpers.findClass(MGR, cl), "getInstance", app);
-            // The manager caches the previous popup data (mData) and bind state; reset them so a
-            // repeated call with other parameters is not ignored.
-            try { XposedHelpers.callMethod(mgr, "clearPairData"); } catch (Throwable t) { L("clearPairData: " + t); }
-            try { XposedHelpers.callMethod(mgr, "unbindPairViewService"); } catch (Throwable t) { L("unbind: " + t); }
-            if (i.hasExtra("charge")) XposedHelpers.callMethod(bean, "setChargeState", i.getIntExtra("charge", 0));
-            if (i.hasExtra("view")) XposedHelpers.callMethod(bean, "setViewState", i.getIntExtra("view", 0));
-            XposedHelpers.callMethod(mgr, "onFoundTwsOptionView", bean);
-            // Debug: what the manager actually pushed to the UI process
-            try { L("bean=" + bean); } catch (Throwable t) { L("bean.toString failed: " + t); }
-            try { L("mData=" + XposedHelpers.getObjectField(mgr, "mData")); } catch (Throwable t) { L("mData read failed: " + t); }
-            L("onFoundTwsOptionView called, model=" + model);
-        } catch (Throwable t) {
-            L("show failed: " + t);
-            Log.e("TwsPopup", "trace", t);
+            L.e("install failed in " + lp.processName, t);
         }
     }
 }
