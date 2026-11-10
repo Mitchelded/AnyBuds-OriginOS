@@ -9,6 +9,8 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.app.Service;
+import android.util.Log;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -32,9 +34,31 @@ public class Hook implements IXposedHookLoadPackage {
     static final String MGR = "com.android.vivo.tws.fastpair.vipc.TwsFastPairViewServerManager";
     static boolean registered;
 
+    static void L(String m) {
+        XposedBridge.log("TwsPopup: " + m);
+        Log.i("TwsPopup", m);
+    }
+
     @Override
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lp) {
-        if (!PKG.equals(lp.packageName) || !PKG.equals(lp.processName)) return;
+        if (!PKG.equals(lp.packageName)) return;
+        L("handleLoadPackage process=" + lp.processName);
+        // Direct trigger: starting this service (am start-foreground-service ... DongleDeviceViewService)
+        // now shows the popup with default values.
+        try {
+            XposedHelpers.findAndHookMethod("com.android.vivo.tws.fastpair.service.DongleDeviceViewService",
+                    lp.classLoader, "onCreate", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(final MethodHookParam p) {
+                    final Service sv = (Service) p.thisObject;
+                    L("DongleDeviceViewService.onCreate in " + lp.processName);
+                    new Handler(Looper.getMainLooper()).post(() -> show(sv.getApplication(), lp.classLoader, new Intent()));
+                }
+            });
+        } catch (Throwable t) {
+            L("dongle hook failed: " + t);
+        }
+        if (!PKG.equals(lp.processName)) return;
         XposedHelpers.findAndHookMethod(Application.class, "onCreate", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam p) {
@@ -51,7 +75,7 @@ public class Hook implements IXposedHookLoadPackage {
                 IntentFilter f = new IntentFilter(ACTION);
                 if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(r, f, Context.RECEIVER_EXPORTED);
                 else app.registerReceiver(r, f);
-                XposedBridge.log("TwsPopup: receiver registered");
+                L("receiver registered");
             }
         });
     }
@@ -71,7 +95,7 @@ public class Hook implements IXposedHookLoadPackage {
                 k.setAccessible(true);
                 bean = k.newInstance((Object) null, (Object) null);
             } catch (Throwable t) {
-                XposedBridge.log("TwsPopup: ctor(null,null) failed, using Unsafe: " + t);
+                L("ctor(null,null) failed, using Unsafe: " + t);
                 Field uf = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");
                 uf.setAccessible(true);
                 Object u = uf.get(null);
@@ -91,10 +115,10 @@ public class Hook implements IXposedHookLoadPackage {
 
             Object mgr = XposedHelpers.callStaticMethod(XposedHelpers.findClass(MGR, cl), "getInstance", app);
             XposedHelpers.callMethod(mgr, "onFoundTwsOptionView", bean);
-            XposedBridge.log("TwsPopup: onFoundTwsOptionView called, model=" + model);
+            L("onFoundTwsOptionView called, model=" + model);
         } catch (Throwable t) {
-            XposedBridge.log("TwsPopup: show failed: " + t);
-            XposedBridge.log(t);
+            L("show failed: " + t);
+            Log.e("TwsPopup", "trace", t);
         }
     }
 }
