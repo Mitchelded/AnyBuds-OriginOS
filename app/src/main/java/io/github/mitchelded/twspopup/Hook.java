@@ -179,6 +179,10 @@ public class Hook implements IXposedHookLoadPackage {
             XposedHelpers.callMethod(bean, "setBaseStateEarbudsCount", 2);
 
             Object mgr = XposedHelpers.callStaticMethod(XposedHelpers.findClass(MGR, cl), "getInstance", app);
+            // The manager caches the previous popup data (mData) and bind state; reset them so a
+            // repeated call with other parameters is not ignored.
+            try { XposedHelpers.callMethod(mgr, "clearPairData"); } catch (Throwable t) { L("clearPairData: " + t); }
+            try { XposedHelpers.callMethod(mgr, "unbindPairViewService"); } catch (Throwable t) { L("unbind: " + t); }
             XposedHelpers.callMethod(mgr, "onFoundTwsOptionView", bean);
             L("onFoundTwsOptionView called, model=" + model);
         } catch (Throwable t) {
