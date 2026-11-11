@@ -13,10 +13,15 @@
 | Local debug build | Passed, artifacts/AnyBuds-OriginOS-1.4-dev-debug.apk |
 | Local APK SHA256 | c874e0297dd7005eb83f95121b3a4386af670ab2aa436653bb17677755fdc0a1 |
 | APK metadata/signature | aapt confirms 1.4-dev/code 11, min 29/target 34. Debug signing identity is retained |
-| Hosted CI | Pending commit/push |
+| Hosted CI | Run 43051250437 passed for f6fe28f. Downloaded XML confirms all 31 tests with 0 failures/errors/skips |
+| CI artifact | APK 13870295371 and reports 13869820485 downloaded and inspected |
+| CI APK SHA256 | b4563e12dc6e5ea5ce29901807acaf69ae53e8825d80a9c0f62977d1beb896a6 |
+| CI APK metadata/signature | Version 1.4-dev/code 11/min 29/target 34, v2 signature and existing certificate verified |
 | Device acceptance | Pending H01–H06. Earlier user feedback is preserved in docs/TEST_REPORT.md |
 
 The new regression cases cover exclusion of aggregate events, identity/age checks, reports queued before a disconnect, delayed disconnects after newer connections, invalid observations, all-unknown reports and cancellation while the vivo session is still pending.
+
+Hosted evidence is https://github.com/Mitchelded/AnyBuds-OriginOS/actions/runs/43051250437. The CI APK is preserved locally as `artifacts/ci-43051250437-AnyBuds-OriginOS-1.4-dev-debug.apk`. The pre-review backup passed independent checksum and ZIP integrity verification.
 
 ## Earlier infrastructure and 1.1-dev evidence
 

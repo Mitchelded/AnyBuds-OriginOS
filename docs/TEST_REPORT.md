@@ -41,3 +41,5 @@ Remote heads were unchanged at review time. The local 1.3-dev work was backed up
 Source inspection found that HeyMelody's aggregate Android callback also reaches setBatteryInfo as type 1. Version 1.4-dev gates forwarding on the paired per-part BluetoothReceiveData event. It also cancels pending vivo opens on disconnect and keeps disconnect cutoffs to reject queued earlier observations. These findings explain concrete code paths. The user's actual missing-delivery cause remains unconfirmed until new logs arrive.
 
 Local 1.4-dev validation passed with 31 JVM tests, 0 failures/errors/skips, lint with 0 errors and 4 existing warnings, and a debug build. User tests H01–H06 are pending. Final APK checksum is recorded in the root TEST_REPORT.md.
+
+Hosted run 43051250437 also passed with all 31 tests confirmed in downloaded XML. APK checksum and v2 signature were checked. This supplies build evidence while user device acceptance remains pending.

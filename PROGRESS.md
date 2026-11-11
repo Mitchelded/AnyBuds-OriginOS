@@ -8,7 +8,9 @@ Reviewed the new hook, report/cache classes, popup changes, tests, device feedba
 
 Fixed disconnect cancellation during the vivo rebind delay, rejection of reports observed before a disconnect and protection of newer connections from delayed reset events. Cache entries are checked again when rendering starts. Zero/invalid vendor levels, invalid charging masks, negative timestamps and all-unknown reports are handled explicitly.
 
-Local validation passed with 31 tests, 0 failures/errors/skips, lint with 0 errors and 4 inherited warnings, and a debug build. Local APK `artifacts/AnyBuds-OriginOS-1.4-dev-debug.apk` has SHA256 `c874e0297dd7005eb83f95121b3a4386af670ab2aa436653bb17677755fdc0a1`. Automatic close checks that the module still owns the manager data before closing. Commit/push and hosted CI verification are next. Hook delivery and accuracy on the user's device are pending. The actual cause of missing vendor delivery has not been confirmed.
+Local validation passed with 31 tests, 0 failures/errors/skips, lint with 0 errors and 4 inherited warnings, and a debug build. Local APK `artifacts/AnyBuds-OriginOS-1.4-dev-debug.apk` has SHA256 `c874e0297dd7005eb83f95121b3a4386af670ab2aa436653bb17677755fdc0a1`. Automatic close checks that the module still owns the manager data before closing. Hook delivery and accuracy on the user's device are pending. The actual cause of missing vendor delivery has not been confirmed.
+
+Commits `34277e9` and `f6fe28f` are pushed to the development branch. Hosted run https://github.com/Mitchelded/AnyBuds-OriginOS/actions/runs/43051250437 passed build, unit tests and lint. Downloaded XML reports confirm all 31 tests with zero failures/errors/skips. APK artifact `13870295371` and reports artifact `13869820485` are available. Downloaded APK `artifacts/ci-43051250437-AnyBuds-OriginOS-1.4-dev-debug.apk` has SHA256 `b4563e12dc6e5ea5ce29901807acaf69ae53e8825d80a9c0f62977d1beb896a6`. aapt confirms code 11/version 1.4-dev/min 29/target 34 and apksigner verifies the existing v2 signature. The pre-review backup passed its checksums and ZIP integrity check.
 
 ## Earlier local correction — 1.3-dev (code 10)
 
@@ -65,7 +67,7 @@ Documentation commit `9c6a233`, infrastructure commit `67a7891` and CI correctio
 
 ## Remaining and exact next steps
 
-1. Review the 1.4-dev diff, commit, push the development branch and verify hosted tests/APK artifacts.
-2. Supply 1.4-dev for user scenarios H01–H06 in docs/HEYMELODY_TEST.md with all three scopes. Await logs showing accepted event IDs, report receipt and popup shown/updated. Record actual device/OriginOS/vivo versions and results in docs/TEST_REPORT.md. The supplied Enco Air2i metadata failure already provides enough evidence to move beyond repeating metadata tests.
+1. Await user scenarios H01–H06 for 1.4-dev in docs/HEYMELODY_TEST.md with all three scopes. Capture logs showing accepted event IDs, report receipt and popup shown/updated. Record actual device/OriginOS/vivo versions and results in docs/TEST_REPORT.md. The supplied Enco Air2i metadata failure already provides enough evidence to move beyond repeating metadata tests.
+2. Keep the supplied APK/decompiled code and screenshots private in ignored attachment/tool directories. Development state is committed and synchronized. Resume from this section without repeating the original repository audit.
 3. If delivery still fails, use the first missing diagnostic stage to narrow the exact runtime issue. Trace additional vendor paths from the supplied APK only where the logs and source justify them. Measurement age and case presence remain unresolved.
 4. Implement isolated custom theme system in `DEVELOPMENT_PLAN.md` order, carrying forward actual device findings.
