@@ -2,9 +2,9 @@
 
 ## Current status
 
-Audit and local development infrastructure checks are complete. GitHub Actions verification is next. The first APK is ready for user baseline testing.
+Audit and build infrastructure are verified locally and in GitHub Actions. Optional Android metadata battery provider is implemented in version `1.1-dev` / code 8. Eight unit tests, local lint and APK build passed. Provider commit/push and hosted checks are next. User device results remain pending.
 
-Documentation commit `9c6a233` and infrastructure commit `67a7891` are pushed. First hosted run `42968041422` failed when setup-android v3 requested the removed SDK package `tools`. The workflow now specifies only project packages and uses current Actions on Ubuntu 24.04. Hosted retry is pending.
+Documentation commit `9c6a233`, infrastructure commit `67a7891` and CI correction `1f01e90` are pushed. Hosted run `42968355430` succeeded. Its APK and reports artifacts exist. Downloaded baseline APK SHA256 is `f098a36768e97c546a83a2c1b7c2556665e8bb336f5ad2d83ec0d35016af54d3`, signature verified with the existing certificate. First failed run `42968041422` requested removed SDK package `tools`, corrected through explicit packages and current Actions on Ubuntu 24.04.
 
 ## Completed
 
@@ -17,11 +17,13 @@ Documentation commit `9c6a233` and infrastructure commit `67a7891` are pushed. F
 - Clean, rebuild and lint passed. Unit task returned NO-SOURCE. APK package/version/SDK and v2 signature inspected.
 - Local baseline APK SHA256 is `0cb457626fd06f65c23648c58c1849f71ccde4f44a9f3ba1cd5fd4cd30632acf`.
 - Two MissingPermission lint errors addressed only on Bluetooth-host name lookup using a documented method annotation. Four existing lint warnings remain visible.
+- Added immutable snapshots, provider interface, independent AOSP metadata decoding, runtime getter resolution and optional BtWatcher integration through `twspopup_battery_source=metadata`.
+- Provider tests cover partial/empty/invalid data, unknown charging, API errors and device isolation. All 8 passed. Local 1.1-dev APK SHA256 is `2fea300791e587f312a8dee3b79e822210edcb21e3db137b12d9aa7657d02c75`.
 
 ## Important findings
 
 - Existing popup is entirely vivo-rendered. Existing L/R/case display setters do not acquire measurements.
-- Auto popup duplicates aggregate Bluetooth battery into L/R, case unknown, updates limited to 20 seconds after connection.
+- Default auto source duplicates aggregate Bluetooth battery into L/R. Optional metadata source preserves unknown parts and reads separate cached values. Updates remain limited to existing events within 20 seconds after connection.
 - Vivo compatibility comments name 9.2.41.2 but source APK is absent. No HeyMelody APK is present in the project.
 - No custom renderer, editor, ZIP theme system or general event animation engine exists.
 - Existing `app/debug.keystore` is tracked upstream; preserved for debug update compatibility. No new key material staged.
@@ -34,7 +36,7 @@ Documentation commit `9c6a233` and infrastructure commit `67a7891` are pushed. F
 
 ## Remaining and exact next steps
 
-1. Review staged documentation and infrastructure, commit separately, push branch without force and inspect CI/artifacts.
-2. Continue with source-tagged battery snapshots and an optional verified AOSP metadata provider. Exact earbud model and vendor APK paths are still requested from the user.
-3. Build/check/commit/push the provider increment and supply its APK for manual comparison. Device acceptance remains pending until user feedback.
+1. Review provider diff and documentation, commit and push without force, inspect hosted tests and download/check resulting artifact.
+2. Supply 1.1-dev APK and manual scenarios for user comparison. Exact earbud model, OriginOS/vivo versions and vendor APK paths remain requested from the user. Wait for feedback as required by the user's iterative workflow.
+3. Trace HeyMelody/vivo protocols from actual supplied APKs, improve disconnect lifecycle and metadata updates/freshness using confirmed findings.
 4. Implement isolated custom theme system in `DEVELOPMENT_PLAN.md` order, carrying forward actual device findings.

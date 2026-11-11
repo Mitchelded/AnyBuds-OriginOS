@@ -4,7 +4,7 @@ android {
     compileSdk = 34
     defaultConfig {
         applicationId = "io.github.mitchelded.twspopup"
-        minSdk = 29; targetSdk = 34; versionCode = 7; versionName = "1.0"
+        minSdk = 29; targetSdk = 34; versionCode = 8; versionName = "1.1-dev"
     }
     signingConfigs {
         getByName("debug") {
@@ -31,4 +31,7 @@ android {
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 }
-dependencies { compileOnly("de.robv.android.xposed:api:82") }
+dependencies {
+    compileOnly("de.robv.android.xposed:api:82")
+    testImplementation("junit:junit:4.13.2")
+}

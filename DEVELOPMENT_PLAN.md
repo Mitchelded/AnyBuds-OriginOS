@@ -13,10 +13,12 @@
 - [x] Add CI for development pushes, PRs and manual runs; upload APKs, tests, lint and logs.
 - [x] Gate optional signed release build on complete external signing configuration.
 - [x] Complete clean local build, unit-test task and lint, inspect actual APK metadata/signature. Unit task has NO-SOURCE at this milestone.
-- [ ] Review and commit; push feature branch and verify GitHub Actions artifact.
+- [x] Review and commit, push feature branch and verify GitHub Actions artifact. Successful run 42968355430, downloaded APK and verified SHA256/signature.
 - [ ] User tests legacy baseline on iQOO; record actual device/OS/vivo version.
 
 ## 3. Battery acquisition
+
+The first optional Android metadata provider is implemented in `1.1-dev`. Eight pure JVM tests and local lint/build passed. Hosted provider checks and user acceptance are pending. Vendor APK tracing, freshness/listener lifecycle and case-presence acquisition remain open.
 
 1. Obtain exact target earbud model plus existing HeyMelody/vivo TWS APK paths and hashes; inspect offline without phone access.
 2. Trace vivo bean values back through BLE advertisements, Bluetooth metadata, Binder and native code. Trace HeyMelody protocol/transport separately. Record concrete class/method names, version and evidence.

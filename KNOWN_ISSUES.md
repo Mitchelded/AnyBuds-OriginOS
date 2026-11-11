@@ -3,8 +3,10 @@
 ## Existing application
 
 - Vivo internal API assumptions are inherited from comments naming vivo TWS 9.2.41.2; no target APK or user runtime confirmation in this session. Other versions may fail reflection.
-- Automatic battery path reports an aggregate Android level in both earbud positions; these are not independent measurements. Case, charging and in-case state are not acquired. Broadcast demo defaults are synthetic (80/80/100).
+- Default aggregate battery mode retains its duplicated L/R presentation and unknown case. The optional metadata mode in 1.1-dev reads independent cached L/R/case and nullable charging. Availability and accuracy require user confirmation. Broadcast demo defaults remain synthetic (80/80/100).
 - Auto updates only within 20 seconds after connection; no measurement cadence/freshness guarantee. Pending connection popup can race a disconnect. These need lifecycle work in the battery increment.
+- Metadata-only changes do not trigger reads yet. Cached values may survive disconnects, and their source measurement time is unavailable. One connected bud does not establish freshness or presence of the other part.
+- Case-presence acquisition remains unimplemented. The legacy renderer retains its inherited in-case visual default of 3. Unknown charging has no distinct visual state in that renderer, though the snapshot and diagnostic known-mask preserve it.
 - Connect button animates a visual connection; it does not pair Bluetooth devices.
 - Module commands use an exported host receiver; do not treat broadcast extras as trusted measured telemetry.
 - Popup commands have no timeout upper limit; theme/media/import paths are not yet implemented.

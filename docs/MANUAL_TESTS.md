@@ -30,13 +30,15 @@ Use existing commands in README from the user's own on-device terminal if desire
 
 ## Bluetooth and battery
 
+For `1.1-dev`, first check the default source, then enable `twspopup_battery_source=metadata` using README instructions and reconnect the selected headset. Compare L/R/case and charging against the vendor app with both buds and each single bud. Record `source=android_metadata_cache`, `failedReads`, `chargingKnown`, `readElapsedMs` and actual times. Missing metadata should produce `--`, including when the aggregate value is available. Clear the source setting and reconnect to compare the aggregate path. Metadata read time cannot establish measurement freshness. Case-presence detection remains pending.
+
 | ID | Scenario | Check | Result |
 | --- | --- | --- | --- |
 | B01 | Matching device connects, HFP and A2DP close together | One popup, normal audio/calls; record battery | Not tested |
 | B02 | Nonmatching device and auto filter disabled | No module auto popup; normal Bluetooth | Not tested |
 | B03 | Rapid connect/disconnect, reconnect, Bluetooth off/on | No stale delayed popup, duplicate windows or Bluetooth crash; record existing races | Not tested |
 | B04 | Both buds, left only, right only, each removed/returned to case | Compare real vendor app L/R/case vs module; mark unknowns and synthetic/aggregate values | Not tested |
-| B05 | Case open/closed, cable charging on/off, bud charging | Current module does not acquire these states; do not accept demo flags as detection | Not tested |
+| B05 | Case open/closed, cable charging on/off, bud charging | Metadata mode uses available charging strings. Check unknown-mask diagnostics. Case-presence acquisition remains pending | Not tested |
 | B06 | Watch readings for 5 minutes and around 20-second boundary | Record update timestamps/frequency; current automatic follow-up window is 20 s | Not tested |
 | B07 | One/two different paired headsets | Values/windows must not be attributed to the other device | Not tested |
 | B08 | Low/empty battery, unavailable case, stale cached data | Unknown distinct from zero/100%; baseline aggregate duplication documented | Not tested |

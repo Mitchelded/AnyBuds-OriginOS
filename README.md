@@ -9,12 +9,37 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1
 ```
 
-APK: `artifacts/AnyBuds-OriginOS-1.0-debug.apk` with SHA256. GitHub Actions artifacts:
+APK: `artifacts/AnyBuds-OriginOS-1.1-dev-debug.apk` with SHA256. GitHub Actions artifacts:
 `AnyBuds-OriginOS-<commit SHA>` (APK), `android-reports-<commit SHA>` (reports/logs).
 See [build setup](docs/BUILD.md), [technical audit](docs/TECHNICAL_AUDIT.md),
 [progress](PROGRESS.md), [battery research](docs/BATTERY_RESEARCH.md), and
-[manual device tests](docs/MANUAL_TESTS.md). Custom themes and independent battery
-acquisition are planned increments; the current application uses the legacy vivo renderer.
+[manual device tests](docs/MANUAL_TESTS.md). The optional Android metadata battery reader
+is documented below. The current popup uses the legacy vivo renderer. Custom themes remain planned.
+
+### Раздельные данные батареи через Android metadata
+
+В версии `1.1-dev` добавлен необязательный источник раздельных значений L/R/кейс.
+Включите его самостоятельно в терминале телефона с необходимыми правами, после настройки
+`twspopup_auto` и области `com.android.bluetooth` по инструкции ниже.
+
+```sh
+settings put global twspopup_battery_source metadata
+```
+
+При следующем подключении модуль читает кэш Android Bluetooth metadata. Отсутствующие
+значения отображаются как `--`. В журнале `TwsPopup` записываются источник, время чтения,
+общий уровень и маска известных состояний зарядки. Доступность кэша зависит от прошивки
+и приложения, которое его заполняет. Время измерения наушниками неизвестно. Обновления
+читаются при подключении и существующих событиях общего заряда в течение 20 секунд.
+Положение наушников в кейсе этот источник не определяет.
+
+Возврат к прежнему источнику общего заряда выполняется командой
+
+```sh
+settings delete global twspopup_battery_source
+```
+
+Подробности и ограничения приведены в [исследовании батареи](docs/BATTERY_RESEARCH.md).
 
 Модуль Xposed (Vector / LSPosed) для OriginOS. Показывает системное окно наушников vivo / iQOO
 (карточка сопряжения и карточка с зарядом, как у AirPods) для любых наушников и без наушников vivo.

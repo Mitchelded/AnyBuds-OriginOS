@@ -35,6 +35,8 @@ import de.robv.android.xposed.XposedHelpers;
  */
 final class BtWatcher extends BroadcastReceiver {
     static final String KEY_FILTER = "twspopup_auto";
+    static final String KEY_BATTERY_SOURCE = "twspopup_battery_source";
+    private static final BatteryProvider METADATA_BATTERY = new AndroidMetadataBatteryProvider();
 
     private static final String HEADSET_STATE = "android.bluetooth.headset.profile.action.CONNECTION_STATE_CHANGED";
     private static final String A2DP_STATE = "android.bluetooth.a2dp.profile.action.CONNECTION_STATE_CHANGED";
@@ -127,6 +129,14 @@ final class BtWatcher extends BroadcastReceiver {
                     .putExtra("right", level)
                     .putExtra("box", -1)
                     .putExtra("update", updateOnly);
+            if ("metadata".equals(Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE))) {
+                BatterySnapshot snapshot = METADATA_BATTERY.read(device, battery, SystemClock.elapsedRealtime());
+                show.putExtra("left", snapshot.left.percent)
+                        .putExtra("right", snapshot.right.percent)
+                        .putExtra("box", snapshot.chargingCase.percent)
+                        .putExtra("charging", snapshot.chargingMask());
+                L.i(snapshot.toString());
+            }
             ctx.sendBroadcast(show);
             L.i((updateOnly ? "battery update: " : "asked for a popup: ") + nameOf(device) + " battery=" + level);
         } catch (Throwable t) {
