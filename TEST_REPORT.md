@@ -7,7 +7,8 @@
 - Lint passed with zero errors and four inherited warnings. Initial MissingPermission at BluetoothSocket.connect was resolved with a host-context explanation and method-scoped suppression; runtime failures are caught.
 - APK signature verified; certificate SHA256 remains `75e1b49872afa6020fc61e564645f4b1d567746bb13ea07551609ffed9383fe4`.
 - Fixtures are derived from inspected protocol code. They do not establish service availability, full initialization or measurement freshness on hardware.
-- Manual E01–E08 pending in docs/ENCO_TEST.md. No developer device access. CI result will be recorded after push.
+- Manual E01–E08 pending in docs/ENCO_TEST.md. No developer device access.
+- Hosted run https://github.com/Mitchelded/AnyBuds-OriginOS/actions/runs/43056580093 for code commit c01225f passed build, tests/lint and artifacts. Downloaded XML confirms 42 tests, no failures/errors/skips. APK artifact 13870689773 and reports 13872245349 verified. CI APK SHA256 `fcf921542c6a5cd7bf8855e9759a13d7e6d9aea516e7b7d8ae780b6cf0c36f5e`, version 1.5-dev/code 12 and existing signing certificate confirmed. Only annotation is the inherited Gradle version age notice.
 
 ## Current 1.4-dev / code 11
 
