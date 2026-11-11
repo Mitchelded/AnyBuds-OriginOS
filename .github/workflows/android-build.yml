@@ -1,0 +1,82 @@
+name: Android build
+
+on:
+  push:
+    branches: ['feature/**', 'fix/**', 'chore/**', develop, development, main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_release:
+        description: 'Also build a release APK using configured signing secrets'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install project SDK
+        run: sdkmanager 'platforms;android-34' 'build-tools;34.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - name: Build debug APK
+        shell: pwsh
+        run: ./scripts/build.ps1
+      - name: Unit tests and lint
+        shell: pwsh
+        run: ./scripts/test.ps1
+      - name: Build signed release APK (manual only)
+        if: github.event_name == 'workflow_dispatch' && inputs.build_release
+        shell: pwsh
+        env:
+          ANYBUDS_KEYSTORE_BASE64: ${{ secrets.ANYBUDS_KEYSTORE_BASE64 }}
+          ANYBUDS_SIGNING_STORE_PASSWORD: ${{ secrets.ANYBUDS_SIGNING_STORE_PASSWORD }}
+          ANYBUDS_SIGNING_KEY_ALIAS: ${{ secrets.ANYBUDS_SIGNING_KEY_ALIAS }}
+          ANYBUDS_SIGNING_KEY_PASSWORD: ${{ secrets.ANYBUDS_SIGNING_KEY_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($name in @('ANYBUDS_KEYSTORE_BASE64', 'ANYBUDS_SIGNING_STORE_PASSWORD', 'ANYBUDS_SIGNING_KEY_ALIAS', 'ANYBUDS_SIGNING_KEY_PASSWORD')) {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) { throw "Missing release secret: $name" }
+          }
+          $env:ANYBUDS_SIGNING_STORE_FILE = Join-Path $env:RUNNER_TEMP 'anybuds-release.keystore'
+          try {
+            [IO.File]::WriteAllBytes($env:ANYBUDS_SIGNING_STORE_FILE, [Convert]::FromBase64String($env:ANYBUDS_KEYSTORE_BASE64))
+            ./scripts/build.ps1 -Configuration Release
+            if ($LASTEXITCODE -ne 0) { throw "Release build failed with exit code $LASTEXITCODE" }
+          } finally {
+            if (Test-Path -LiteralPath $env:ANYBUDS_SIGNING_STORE_FILE) { Remove-Item -LiteralPath $env:ANYBUDS_SIGNING_STORE_FILE -Force }
+          }
+      - name: Upload APKs and checksums
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AnyBuds-OriginOS-${{ github.sha }}
+          path: |
+            artifacts/*.apk
+            artifacts/*.sha256
+          if-no-files-found: error
+      - name: Upload reports and failure logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-reports-${{ github.sha }}
+          path: |
+            artifacts/*.log
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: warn

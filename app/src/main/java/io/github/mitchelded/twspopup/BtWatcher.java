@@ -1,5 +1,6 @@
 package io.github.mitchelded.twspopup;
 
+import android.annotation.SuppressLint;
 import android.app.AndroidAppHelper;
 import android.app.Application;
 import android.app.Instrumentation;
@@ -144,6 +145,9 @@ final class BtWatcher extends BroadcastReceiver {
         return name != null && name.toLowerCase(Locale.ROOT).contains(filter.toLowerCase(Locale.ROOT));
     }
 
+    // Runs in the Bluetooth host, with its permissions rather than the module APK's.
+    // Permission denial on a different firmware is handled by the existing catch below.
+    @SuppressLint("MissingPermission")
     private static String nameOf(BluetoothDevice device) {
         try {
             String alias = Build.VERSION.SDK_INT >= 30 ? device.getAlias() : null;

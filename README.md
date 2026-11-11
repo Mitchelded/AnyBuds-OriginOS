@@ -1,5 +1,21 @@
 # TwsPopup
 
+## Development / Разработка
+
+Reproducible builds: Java 17 + Android SDK 34 + the pinned Gradle wrapper.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1
+```
+
+APK: `artifacts/AnyBuds-OriginOS-1.0-debug.apk` with SHA256. GitHub Actions artifacts:
+`AnyBuds-OriginOS-<commit SHA>` (APK), `android-reports-<commit SHA>` (reports/logs).
+See [build setup](docs/BUILD.md), [technical audit](docs/TECHNICAL_AUDIT.md),
+[progress](PROGRESS.md), [battery research](docs/BATTERY_RESEARCH.md), and
+[manual device tests](docs/MANUAL_TESTS.md). Custom themes and independent battery
+acquisition are planned increments; the current application uses the legacy vivo renderer.
+
 Модуль Xposed (Vector / LSPosed) для OriginOS. Показывает системное окно наушников vivo / iQOO
 (карточка сопряжения и карточка с зарядом, как у AirPods) для любых наушников и без наушников vivo.
 
@@ -7,7 +23,7 @@
 
 ## Установка
 
-1. Собери APK: GitHub → Actions → последний запуск → Artifacts → `apk`.
+1. Собери APK: GitHub → Actions → последний успешный запуск → Artifacts → `AnyBuds-OriginOS-<commit SHA>`.
 2. Установи, включи модуль в Vector, область: `com.android.vivo.tws.vivotws`.
 3. Перезапусти приложение vivo, чтобы оно подхватило модуль:
 
