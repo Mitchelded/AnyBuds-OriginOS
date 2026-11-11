@@ -1,5 +1,17 @@
 # Progress — 2026-11-11
 
+## Current implementation — independent Enco candidate, 1.5-dev / code 12
+
+User requested acquisition without HeyMelody. Backed up to `.backups/20261111-190604` after clean Git status and remote fetch. Traced the supplied APK's BR service selection, OPOv1 encoding, capability negotiation, single-event registration and battery parsing. Evidence and limits are in docs/ENCO_PROTOCOL.md. The default RFCOMM UUID is verified in the APK, but its use by Enco Air2i is not observed; the app can override it per device and also supports BLE.
+
+Implemented opt-in `twspopup_battery_source=enco` in the Bluetooth host. It connects to an already bonded matching device, requests notification capabilities, subscribes only if battery event 1 is advertised, and decodes separate raw percentages and charging. No HeyMelody execution is used by this path. The worker closes its socket at 20 seconds, on replacement or ACL disconnect. Source/filter changes prevent report delivery; an idle socket may remain until the deadline. Existing modes remain available. Cache lookup isolates source IDs.
+
+Local build, 42 JVM tests and lint passed (0 errors, 4 inherited warnings). New tests cover wire fixtures, short reads, concatenation/fragmentation, malformed lengths, response correlation, part identity, invalid/duplicate values and source isolation. Fixtures are derived, not captured phone traffic. Android transport, real cancellation, initial notification, model compatibility and audio coexistence remain untested. Initial lint exposed the host-permission context at connect(); a narrowly documented suppression accompanies runtime exception handling.
+
+APK `artifacts/AnyBuds-OriginOS-1.5-dev-debug.apk`, SHA256 `f5055d368c447721f07f4585b2febecf91ce485dd095db8f403388b67502a221`. Signature verifies with the existing debug certificate. No phone connection, installation, or device test was performed. CI verification follows the code push.
+
+Exact next steps: user follows docs/ENCO_TEST.md (E01–E08), with HeyMelody stopped and source `enco`. If unknowns remain, locate the first missing stage: RFCOMM connection, 0x8200 response, subscription, 0x0204 battery report, host receipt/render. Do not invent initialization commands or declare service support from compilation. Use the result to decide whether additional initialization, a per-model UUID, BLE or the observed system +VDBTY route is needed. Continuous monitoring and the custom theme engine remain unfinished.
+
 ## Latest manual feedback — HeyMelody availability
 
 User reports correct percentage display with HeyMelody running, and all fields `--` after it is closed/unloaded. This confirms user-observed delivery in the running-app scenario, while exact installed version, source event IDs, process freeze versus termination, and numerical accuracy were not independently reconfirmed. Other manual scenarios remain pending. See docs/TEST_REPORT.md.

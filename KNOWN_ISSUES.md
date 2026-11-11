@@ -1,8 +1,16 @@
 # Known issues and limitations
 
+## Independent Enco candidate — 1.5-dev
+
+- `source=enco` implements a bounded direct RFCOMM battery subscription without HeyMelody. Enco Air2i's service UUID/transport, required initialization, initial notification and audio coexistence are not device-verified. HeyMelody supports per-device UUID overrides and BLE.
+- Acquisition lasts at most 20 seconds per matching connection, without retry loops or continuous monitoring. Source/filter changes block delivery, but an idle socket can remain until its deadline. Concurrent vendor clients may compete for the earbud service; the initial manual test uses HeyMelody stopped.
+- Only advertised battery event 1 is subscribed. No speculative polling/initialization command is sent. If subscription does not emit current readings, values remain unknown until a notification arrives within the acquisition window.
+- Raw percentages may differ from HeyMelody's upward rounding. Zero remains unavailable per vendor convention. Case presence, measurement age and availability of disconnected parts remain unproven.
+- `+VDBTY` and BLE paths are researched but not implemented. See docs/ENCO_PROTOCOL.md and docs/ENCO_TEST.md.
+
 ## Current HeyMelody increment
 
-- Version 1.4-dev supports the supplied HeyMelody 117.6.6/code 117006006. User reports correct percentage display while HeyMelody runs, and all unknowns when closed/unloaded. The observer depends on that process executing vendor callbacks. Independent acquisition is not implemented. Exact process state, measurement freshness and remaining manual scenarios are unverified.
+- The preserved HeyMelody observer supports 117.6.6/code 117006006. User reports correct percentage display while HeyMelody runs, and all unknowns when closed/unloaded. That observer depends on vendor callbacks; the separate experimental independent candidate is described above. Exact process state, measurement freshness and remaining manual scenarios are unverified.
 - Enco Air2i metadata mode was exercised by the user and produced unknown L/R/case despite aggregate 100. Device feedback is in `docs/TEST_REPORT.md`.
 - HeyMelody's setter receives both aggregate and per-part data. The observer now requires its matching per-part event 1048588/1048589. Runtime pairing across the hooked calls remains a manual acceptance item.
 - Event 1048589 can use vendor cached preferences. Local observation age is bounded to 10 seconds, while source measurement age remains unknown. Case presence remains unavailable.

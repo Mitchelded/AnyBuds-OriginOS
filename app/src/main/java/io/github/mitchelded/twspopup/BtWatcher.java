@@ -53,6 +53,7 @@ final class BtWatcher extends BroadcastReceiver {
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Map<String, Long> shownAt = new HashMap<>();
+    private final EncoBatteryClient enco = new EncoBatteryClient();
 
     static void install() {
         if (installed) return;
@@ -96,6 +97,11 @@ final class BtWatcher extends BroadcastReceiver {
         try {
             String filter = filterOf(ctx);
             BluetoothDevice device = in.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            if (!EncoBatteryClient.SOURCE.equals(Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE))
+                    || filter == null) enco.cancel(null);
+            if (device != null && BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(in.getAction())) {
+                enco.cancel(device.getAddress());
+            }
             if (filter == null || device == null || !matches(device, filter)) return;
 
             String address = device.getAddress();
@@ -120,6 +126,9 @@ final class BtWatcher extends BroadcastReceiver {
             if (in.getIntExtra(BluetoothProfile.EXTRA_STATE, -1) != BluetoothProfile.STATE_CONNECTED) return;
             if (last != null && now - last < SAME_CONNECTION_MS) return;
             shownAt.put(address, now);
+            if (EncoBatteryClient.SOURCE.equals(Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE))) {
+                enco.start(ctx, device);
+            }
             main.postDelayed(() -> {
                 Long current = shownAt.get(address);
                 if (current != null && current == now) request(ctx, device, batteryOf(device), false, now);
@@ -131,7 +140,8 @@ final class BtWatcher extends BroadcastReceiver {
 
     private static void request(Context ctx, BluetoothDevice device, int battery, boolean updateOnly, long connectionAt) {
         try {
-            boolean vendor = "heymelody".equals(Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE));
+            String source = Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE);
+            boolean vendor = "heymelody".equals(source) || EncoBatteryClient.SOURCE.equals(source);
             // Aggregate changes must not erase vendor reports or keep old cache values alive.
             if (vendor && updateOnly) return;
             int level = battery < 0 ? -1 : battery;   // Android has one level for the pair; the case is unknown
@@ -148,7 +158,7 @@ final class BtWatcher extends BroadcastReceiver {
             show.putExtra("connectionElapsedMs", connectionAt);
             if (vendor) {
                 show.putExtra("left", -1).putExtra("right", -1).putExtra("vendorMode", true);
-                L.i("source=heymelody_waiting; opening popup independently of vendor reports");
+                L.i("source=" + source + "_waiting; opening popup independently of vendor reports");
             }
             if ("metadata".equals(Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE))) {
                 BatterySnapshot snapshot = METADATA_BATTERY.read(device, battery, SystemClock.elapsedRealtime());

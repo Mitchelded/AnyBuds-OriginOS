@@ -1,5 +1,9 @@
 # TwsPopup
 
+Experimental **1.5-dev** adds independent RFCOMM acquisition with `settings put global twspopup_battery_source enco`.
+It runs in the Bluetooth host without HeyMelody, using a 20-second capability/subscription session.
+Actual Enco Air2i transport and initial notification remain unverified. Follow [the independent-source test](docs/ENCO_TEST.md) with HeyMelody stopped. [Protocol evidence and limitations](docs/ENCO_PROTOCOL.md).
+
 Experimental **1.4-dev** observes separate battery events inside HeyMelody 117.6.6.
 Enable the additional `com.heytap.headset` module scope and follow [the device checklist](docs/HEYMELODY_TEST.md).
 Select with `settings put global twspopup_battery_source heymelody`; HeyMelody must run and receive reports.
@@ -14,7 +18,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1
 ```
 
-APK: `artifacts/AnyBuds-OriginOS-1.4-dev-debug.apk` with SHA256. GitHub Actions artifacts:
+APK: `artifacts/AnyBuds-OriginOS-1.5-dev-debug.apk` with SHA256. GitHub Actions artifacts:
 `AnyBuds-OriginOS-<commit SHA>` (APK), `android-reports-<commit SHA>` (reports/logs).
 See [build setup](docs/BUILD.md), [technical audit](docs/TECHNICAL_AUDIT.md),
 [progress](PROGRESS.md), [battery research](docs/BATTERY_RESEARCH.md), and

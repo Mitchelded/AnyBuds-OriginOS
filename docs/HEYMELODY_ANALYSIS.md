@@ -1,5 +1,7 @@
 # HeyMelody 117.6.6 — offline battery investigation
 
+Follow-up: 1.5-dev implements a separate experimental RFCOMM client from the inspected transport/protocol. See [ENCO_PROTOCOL.md](ENCO_PROTOCOL.md) for the evidence and unverified model assumptions, and [ENCO_TEST.md](ENCO_TEST.md) for manual validation with HeyMelody stopped.
+
 ## Input and reproducibility
 
 User-supplied `HeyMelody_v117.6.6.apk`, received 2026-11-11. Package `com.heytap.headset`, versionName `117.6.6`, versionCode `117006006` (decoded AndroidManifest.xml).

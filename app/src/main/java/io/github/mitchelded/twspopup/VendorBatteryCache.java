@@ -9,7 +9,12 @@ final class VendorBatteryCache {
     static final class Entry {
         final long observed;
         final int left, right, box, charging;
+        final String source;
         Entry(long observed, int left, int right, int box, int charging) {
+            this(observed, left, right, box, charging, "heymelody");
+        }
+        Entry(long observed, int left, int right, int box, int charging, String source) {
+            this.source = source;
             this.observed = observed;
             this.left = left > 0 ? BatterySnapshot.validPercent(left) : -1;
             this.right = right > 0 ? BatterySnapshot.validPercent(right) : -1;
@@ -55,6 +60,11 @@ final class VendorBatteryCache {
             return null;
         }
         return entry;
+    }
+
+    Entry get(String address, long now, String source) {
+        Entry entry = get(address, now);
+        return entry != null && entry.source.equals(source) ? entry : null;
     }
 
     private void remember(String address, Slot slot) {

@@ -108,16 +108,20 @@ final class PopupController {
             case ACTION_SHOW:
                 if (in.getBooleanExtra("vendorMode", false)) {
                     VendorBatteryCache.Entry cached = VENDOR_CACHE.get(
-                            in.getStringExtra("mac"), SystemClock.elapsedRealtime());
+                            in.getStringExtra("mac"), SystemClock.elapsedRealtime(),
+                            Settings.Global.getString(app.getContentResolver(), BtWatcher.KEY_BATTERY_SOURCE));
                     if (cached != null) applyVendor(in, cached);
-                    L.i(cached == null ? "HeyMelody popup: waiting for vendor report"
-                            : "HeyMelody popup: using recent observed report");
+                    L.i(cached == null ? "Vendor popup: waiting for battery report"
+                            : "Vendor popup: using recent observed report");
                 }
                 show(app, PopupRequest.from(app, in));
                 break;
             case ACTION_VENDOR:
-                if (!"heymelody".equals(Settings.Global.getString(app.getContentResolver(),
-                        BtWatcher.KEY_BATTERY_SOURCE))) return;
+                String selectedSource = Settings.Global.getString(app.getContentResolver(), BtWatcher.KEY_BATTERY_SOURCE);
+                String reportSource = in.getStringExtra("batterySource");
+                if (reportSource == null) reportSource = "heymelody";
+                if (!("heymelody".equals(selectedSource) || EncoBatteryClient.SOURCE.equals(selectedSource))
+                        || !selectedSource.equals(reportSource)) return;
                 String address = in.getStringExtra("mac");
                 if (address == null) return;
                 address = address.toUpperCase(Locale.ROOT);
@@ -125,12 +129,12 @@ final class PopupController {
                 VendorBatteryCache.Entry entry = new VendorBatteryCache.Entry(
                         in.getLongExtra("observedElapsedMs", -1), in.getIntExtra("left", -1),
                         in.getIntExtra("right", -1), in.getIntExtra("box", -1),
-                        in.getIntExtra("charging", 0));
+                        in.getIntExtra("charging", 0), reportSource);
                 if (!VENDOR_CACHE.put(address, entry, SystemClock.elapsedRealtime())) {
-                    L.w("HeyMelody report rejected: invalid, expired, disconnected or out of order");
+                    L.w("Vendor report rejected: invalid, expired, disconnected or out of order");
                     return;
                 }
-                L.i("HeyMelody report received L=" + entry.left + " R=" + entry.right + " case=" + entry.box);
+                L.i("Vendor report received source=" + reportSource + " L=" + entry.left + " R=" + entry.right + " case=" + entry.box);
                 // Reports never open a popup. Bluetooth connection events own the window lifecycle.
                 if (session != null && session.request.vendorMode && session.request.mac.equals(address)) {
                     applyVendor(in, entry);
@@ -205,7 +209,8 @@ final class PopupController {
     private static void open(Application app, Object manager, PopupRequest request, int gen) {
         try {
             if (request.vendorMode) {
-                request = request.withVendorBattery(VENDOR_CACHE.get(request.mac, SystemClock.elapsedRealtime()));
+                request = request.withVendorBattery(VENDOR_CACHE.get(request.mac, SystemClock.elapsedRealtime(),
+                        Settings.Global.getString(app.getContentResolver(), BtWatcher.KEY_BATTERY_SOURCE)));
             }
             DeviceBean bean = DeviceBean.create(api, app, request);
             if (bean == null) return;

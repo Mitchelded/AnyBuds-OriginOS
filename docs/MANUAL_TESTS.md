@@ -1,6 +1,6 @@
 # Manual device tests
 
-Current build is 1.4-dev/code 11. HeyMelody testing uses all three scopes and the H01–H06 scenarios in [HEYMELODY_TEST.md](HEYMELODY_TEST.md). Enco Air2i metadata failure and user reports for 1.2-dev are recorded in [device feedback](TEST_REPORT.md). New 1.4-dev device results remain pending.
+Current build is 1.5-dev/code 12. Independent experimental source `enco` uses Bluetooth/vivo scopes and E01–E08 in [ENCO_TEST.md](ENCO_TEST.md); all are pending. The user reports correct percentages with the earlier HeyMelody observer while HeyMelody runs, and all unknowns when it is closed/unloaded. Remaining observer tests use all three scopes and H01–H06 in [HEYMELODY_TEST.md](HEYMELODY_TEST.md). Historical metadata failure and other observations are recorded in [device feedback](TEST_REPORT.md).
 
 All device tests are performed personally by the user. Developer does not connect to the phone, install APKs, run ADB or automate device tests. Initial battery comparison feedback is recorded in `TEST_REPORT.md`: separate L/R and case accuracy failed, active loaded source is unresolved. Table rows below remain pending complete scenario-specific evidence.
 

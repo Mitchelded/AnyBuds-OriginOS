@@ -4,6 +4,15 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class VendorBatteryCacheTest {
+    @Test public void sourceSwitchDoesNotReuseOtherProvidersReport() {
+        VendorBatteryCache cache = new VendorBatteryCache();
+        assertTrue(cache.put("a", entry(100), 100));
+        assertNull(cache.get("a", 101, "enco"));
+        assertNotNull(cache.get("a", 101, "heymelody"));
+        assertTrue(cache.put("a", new VendorBatteryCache.Entry(102, 80, 90, 100, 0, "enco"), 102));
+        assertNull(cache.get("a", 103, "heymelody"));
+        assertEquals(80, cache.get("a", 103, "enco").left);
+    }
     private VendorBatteryCache.Entry entry(long time) {
         return new VendorBatteryCache.Entry(time, 90, 100, 100, 2);
     }

@@ -1,5 +1,13 @@
 # Development plan
 
+## Latest battery increment — 1.5-dev
+
+- [x] Trace independent RFCOMM transport, framing, capabilities and battery subscription in the supplied APK.
+- [x] Add opt-in bounded client, strict codec and source-isolated delivery; retain existing modes.
+- [x] Pass local build, 42 JVM tests and lint; document source evidence and experimental limits.
+- [ ] Confirm Enco Air2i transport and initial report delivery with user scenarios E01–E08 in docs/ENCO_TEST.md.
+- [ ] Use the first failing diagnostic stage to implement any necessary initialization/transport correction. Continuous monitoring and system +VDBTY/BLE acquisition remain future work.
+
 ## 1. Audit and preservation
 
 - [x] Review complete tracked implementation, build configuration, Git history and remote heads.

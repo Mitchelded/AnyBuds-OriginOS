@@ -1,5 +1,14 @@
 # Test report — 2026-11-11
 
+## Current 1.5-dev / code 12 — independent Enco candidate
+
+- Local debug build passed. APK `artifacts/AnyBuds-OriginOS-1.5-dev-debug.apk`, SHA256 `f5055d368c447721f07f4585b2febecf91ce485dd095db8f403388b67502a221`.
+- 42 JVM tests passed, zero failures/errors/skips (10 new codec tests, 1 cache source-isolation regression and 31 previous tests).
+- Lint passed with zero errors and four inherited warnings. Initial MissingPermission at BluetoothSocket.connect was resolved with a host-context explanation and method-scoped suppression; runtime failures are caught.
+- APK signature verified; certificate SHA256 remains `75e1b49872afa6020fc61e564645f4b1d567746bb13ea07551609ffed9383fe4`.
+- Fixtures are derived from inspected protocol code. They do not establish service availability, full initialization or measurement freshness on hardware.
+- Manual E01–E08 pending in docs/ENCO_TEST.md. No developer device access. CI result will be recorded after push.
+
 ## Current 1.4-dev / code 11
 
 Latest manual feedback: the user reports correct percentage display while HeyMelody runs, and all unknowns when it is closed/unloaded. This is limited user acceptance of running-app delivery; remaining scenarios and measurement freshness are unverified. Details are in docs/TEST_REPORT.md. The feedback update changes documentation only; the APK and automatic test evidence below remain unchanged.

@@ -2,6 +2,8 @@
 
 Read `PROGRESS.md` first to resume. User instructions and `C:/Users/trety/.codex/RTK.md` apply; prefix shell commands with `rtk` (`rtk proxy` works when its filtered subcommands cannot find Claude configuration).
 
+Current 1.5-dev adds opt-in `enco` direct RFCOMM acquisition through EncoBatteryClient/EncoProtocol. Read docs/ENCO_PROTOCOL.md for evidence, limits and unverified device assumptions, and docs/ENCO_TEST.md for the handoff. Keep the 20-second deadline and cancellation, source-isolated cache, strict packet bounds and unknown-part semantics. Never treat compilation or derived fixtures as confirmation of Enco Air2i's transport. The user confirmed the earlier HeyMelody observer only while that app runs.
+
 - Android Java/Xposed project, module `app`, package `io.github.mitchelded.twspopup`.
 - Preserve legacy vivo popup. Host package `com.android.vivo.tws.vivotws`; optional Bluetooth hook `com.android.bluetooth`.
 - AGP 8.5.2, Gradle wrapper 8.7, Java 17, SDK/build tools 34. Min Android 10/API 29.
