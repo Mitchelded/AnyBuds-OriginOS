@@ -2,6 +2,8 @@
 
 ## Current 1.4-dev / code 11
 
+Latest manual feedback: the user reports correct percentage display while HeyMelody runs, and all unknowns when it is closed/unloaded. This is limited user acceptance of running-app delivery; remaining scenarios and measurement freshness are unverified. Details are in docs/TEST_REPORT.md. The feedback update changes documentation only; the APK and automatic test evidence below remain unchanged.
+
 | Check | Result |
 | --- | --- |
 | Origin comparison | Main 2cd100c and development c418bb1 at review start. 1.3-dev changes were local |

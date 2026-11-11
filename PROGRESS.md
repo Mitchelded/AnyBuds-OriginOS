@@ -1,5 +1,13 @@
 # Progress — 2026-11-11
 
+## Latest manual feedback — HeyMelody availability
+
+User reports correct percentage display with HeyMelody running, and all fields `--` after it is closed/unloaded. This confirms user-observed delivery in the running-app scenario, while exact installed version, source event IDs, process freeze versus termination, and numerical accuracy were not independently reconfirmed. Other manual scenarios remain pending. See docs/TEST_REPORT.md.
+
+Reviewed HeyMelodyBatteryHook: it runs inside the vendor process and observes existing callbacks; it cannot obtain new readings while that process is inactive. No independent Bluetooth transport or automatic vendor-app startup exists. Current unknown display is consistent with absent reports, rather than proof of a rendering fault. Cache extension would not solve fresh acquisition.
+
+Next step: trace Enco Air2i transport selection, request framing, and available system/vendor notifications in the supplied APK to assess an independent provider. Keep the functioning observer available. Do not claim independence, keep the vendor process alive automatically, or present stale values as current. Remaining H01–H06 checks still apply, with the basic running-app delivery now user-reported successful. This documentation-only update follows backup `.backups/20261111-185946`; no new APK or build is required.
+
 ## Current review and continuation — 1.4-dev / code 11
 
 Live GitHub comparison and fetch found origin main at `2cd100c` and development at `c418bb1`. New 1.2/1.3 work existed locally and was uncommitted. Backup `.backups/20261111-182651` preserves source, attachments and Git history. Incoming 1.3-dev passed its 19 tests and build and was preserved as commit `34277e9`. Private attachment folders are ignored.

@@ -1,5 +1,13 @@
 # Device feedback — 2026-11-11
 
+## Latest feedback: HeyMelody process dependency
+
+Following the 1.4-dev handoff, the user reports that percentages display correctly while HeyMelody is running and Android has not suspended it. When HeyMelody is closed or removed from memory, all three fields display `--`. Installed version was not independently reconfirmed in this message; no new logs or numerical comparisons were supplied.
+
+This is user-reported successful display with the vendor process available, and failed availability without it. It is consistent with the observer executing inside HeyMelody and forwarding its reports. It does not distinguish process termination, cached-process freezing, or vendor service inactivity, and does not establish measurement freshness, charging accuracy, single-bud behavior, or all H01–H06 results. A recent-app card alone is insufficient evidence of the process state.
+
+Independent acquisition remains required for fresh per-part values without HeyMelody. Do not treat a longer-lived cache as a new measurement or silently replace unknown per-part values with aggregate battery data. Next investigation should trace the supplied APK's transport selection and system/vendor input for Enco Air2i before implementing a provider. No device access or automated phone testing was performed.
+
 ## OPPO Enco Air2i: separate battery readings unresolved
 
 User reports different earbud levels but identical levels in the module popup, and no case battery level. Supplied screenshots show:

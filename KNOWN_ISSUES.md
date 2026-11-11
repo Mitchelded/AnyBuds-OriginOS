@@ -2,7 +2,7 @@
 
 ## Current HeyMelody increment
 
-- Version 1.4-dev supports the supplied HeyMelody 117.6.6/code 117006006. Xposed hook delivery and battery accuracy require user validation.
+- Version 1.4-dev supports the supplied HeyMelody 117.6.6/code 117006006. User reports correct percentage display while HeyMelody runs, and all unknowns when closed/unloaded. The observer depends on that process executing vendor callbacks. Independent acquisition is not implemented. Exact process state, measurement freshness and remaining manual scenarios are unverified.
 - Enco Air2i metadata mode was exercised by the user and produced unknown L/R/case despite aggregate 100. Device feedback is in `docs/TEST_REPORT.md`.
 - HeyMelody's setter receives both aggregate and per-part data. The observer now requires its matching per-part event 1048588/1048589. Runtime pairing across the hooked calls remains a manual acceptance item.
 - Event 1048589 can use vendor cached preferences. Local observation age is bounded to 10 seconds, while source measurement age remains unknown. Case presence remains unavailable.
