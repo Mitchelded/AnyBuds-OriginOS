@@ -12,7 +12,7 @@
 | Android lint | Passed, 0 errors and 4 existing warnings. Bluetooth-host permission context documented on nameOf with method-level annotation |
 | Script/workflow validation | All five PowerShell scripts parsed successfully. Workflow YAML parsed. Actual hosted workflow pending push |
 | APK metadata/signature | Package io.github.mitchelded.twspopup, version 1.0/code 7, min SDK 29, target 34. apksigner verifies v2, certificate SHA256 75e1b49872afa6020fc61e564645f4b1d567746bb13ea07551609ffed9383fe4 |
-| GitHub Actions | Pending push |
+| GitHub Actions | First hosted run 42968041422 failed in setup-android v3 due to removed SDK package tools. Explicit SDK packages and current Actions configured for retry |
 | Signed release | Not built; external release credentials not configured |
 | Missing signing configuration | Release script correctly failed with exit code 1 before invoking Gradle |
 | iQOO / OriginOS | Not tested; exclusively performed by user |

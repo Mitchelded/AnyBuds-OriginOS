@@ -4,6 +4,8 @@
 
 Audit and local development infrastructure checks are complete. GitHub Actions verification is next. The first APK is ready for user baseline testing.
 
+Documentation commit `9c6a233` and infrastructure commit `67a7891` are pushed. First hosted run `42968041422` failed when setup-android v3 requested the removed SDK package `tools`. The workflow now specifies only project packages and uses current Actions on Ubuntu 24.04. Hosted retry is pending.
+
 ## Completed
 
 - Live remote main matches initial local `2cd100c`; no tracked user edits. Preserved untracked `.claude` settings.
@@ -28,6 +30,7 @@ Audit and local development infrastructure checks are complete. GitHub Actions v
 - Java is `C:/Users/trety/miniconda3/Library/lib/jvm`. SDK 34 revision 3 and build tools 34.0.0 are verified in ignored `.tools/android-sdk`, selected through ignored `local.properties`. Optional platform-tools are absent locally and Gradle logs a warning. APK/lint tasks pass.
 - GitHub Schannel TLS failed after the environment update. Per-command `git -c http.sslBackend=openssl` works, with certificate verification enabled. GitHub API uses existing Git Credential Manager authentication in memory after an anonymous rate limit.
 - claude-mem observation storage is unavailable due to provider refusal. Repository documents carry the resumable state.
+- Git author configuration was absent. Commits use the author identity from the existing repository history through per-command configuration. Global Git settings remain untouched.
 
 ## Remaining and exact next steps
 

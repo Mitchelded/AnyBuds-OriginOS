@@ -23,8 +23,12 @@ try {
     } finally { $archive.Dispose() }
     & git status --short --branch | Set-Content -Encoding UTF8 (Join-Path $destination 'git-status.txt')
     if ($LASTEXITCODE -ne 0) { throw 'Git status failed.' }
-    $hashes = Get-ChildItem -LiteralPath $destination -File | Where-Object Name -ne 'checksums.csv' |
-        Get-FileHash -Algorithm SHA256 | Select-Object Path,Hash
+    $hashes = Get-ChildItem -LiteralPath $destination -File | Where-Object Name -ne 'checksums.csv' | ForEach-Object {
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try { $hash = [BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($_.FullName))).Replace('-', '').ToLowerInvariant() }
+        finally { $sha.Dispose() }
+        [PSCustomObject]@{ Path = $_.FullName; Hash = $hash }
+    }
     $hashes | Export-Csv -NoTypeInformation (Join-Path $destination 'checksums.csv')
     Write-Host "Backup: $destination (contains private local files; do not publish)"
 } finally { Pop-Location }
