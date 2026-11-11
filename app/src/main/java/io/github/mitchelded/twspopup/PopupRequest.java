@@ -42,6 +42,7 @@ final class PopupRequest {
     final int timeoutSec;         // 0: the popup's own timing decides
     final boolean updateOnly;     // refresh an open popup, never open a new one (late battery reports)
     final boolean vendorMode;
+    final long connectionElapsedMs;
     final String title;           // null: the model's name from the app's config
     final String mac;
 
@@ -58,12 +59,34 @@ final class PopupRequest {
         timeoutSec = Math.max(0, number(x, "timeout", 0));
         updateOnly = flag(x, "update");
         vendorMode = flag(x, "vendorMode");
+        connectionElapsedMs = in.getLongExtra("connectionElapsedMs", -1);
         title = text(x, "title");
         mac = mac(text(x, "mac"));
     }
 
     static PopupRequest from(Context ctx, Intent in) {
         return new PopupRequest(ctx, in);
+    }
+
+    private PopupRequest(PopupRequest original, VendorBatteryCache.Entry entry) {
+        model = original.model;
+        state = original.state;
+        left = entry != null ? entry.left : -1;
+        right = entry != null ? entry.right : -1;
+        box = entry != null ? entry.box : -1;
+        charging = entry != null ? entry.charging : 0;
+        inCase = original.inCase;
+        firstPair = original.firstPair;
+        timeoutSec = original.timeoutSec;
+        updateOnly = original.updateOnly;
+        vendorMode = original.vendorMode;
+        connectionElapsedMs = original.connectionElapsedMs;
+        title = original.title;
+        mac = original.mac;
+    }
+
+    PopupRequest withVendorBattery(VendorBatteryCache.Entry entry) {
+        return new PopupRequest(this, entry);
     }
 
     /** Same earbuds: the open popup can be updated in place instead of being reopened. */

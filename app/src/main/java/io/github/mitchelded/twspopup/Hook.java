@@ -21,7 +21,7 @@ public class Hook implements IXposedHookLoadPackage {
                 // The popup manager and its state live in the main process; ":ui" only draws.
                 if (VivoApi.PACKAGE.equals(lp.processName)) PopupController.install(lp.classLoader);
             } else if (HeyMelodyBatteryHook.PACKAGE.equals(lp.packageName)) {
-                L.i("module=1.3-dev HeyMelody process=" + lp.processName);
+                L.i("module=1.4-dev HeyMelody process=" + lp.processName);
                 if (HeyMelodyBatteryHook.PACKAGE.equals(lp.processName)) HeyMelodyBatteryHook.install(lp.classLoader);
             } else if (BLUETOOTH.equals(lp.packageName)) {
                 BtWatcher.install();

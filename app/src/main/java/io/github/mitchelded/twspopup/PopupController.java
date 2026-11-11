@@ -48,7 +48,7 @@ final class PopupController {
     /** The popup this module is showing right now, or null. */
     private static Session session;
     /** Bumped whenever a popup is opened or closed, so timers of an older popup do nothing. */
-    private static int generation;
+    private static final PopupLifecycle LIFECYCLE = new PopupLifecycle();
 
     private PopupController() { }
 
@@ -127,27 +127,37 @@ final class PopupController {
                         in.getIntExtra("right", -1), in.getIntExtra("box", -1),
                         in.getIntExtra("charging", 0));
                 if (!VENDOR_CACHE.put(address, entry, SystemClock.elapsedRealtime())) {
-                    L.w("HeyMelody report rejected: expired or out of order");
+                    L.w("HeyMelody report rejected: invalid, expired, disconnected or out of order");
                     return;
                 }
                 L.i("HeyMelody report received L=" + entry.left + " R=" + entry.right + " case=" + entry.box);
                 // Reports never open a popup. Bluetooth connection events own the window lifecycle.
                 if (session != null && session.request.vendorMode && session.request.mac.equals(address)) {
+                    applyVendor(in, entry);
                     in.putExtra("mac", address).putExtra("update", true).putExtra("vendorMode", true)
-                            .putExtra("model", session.request.model);
+                            .putExtra("model", session.request.model)
+                            .putExtra("connectionElapsedMs", session.request.connectionElapsedMs);
                     show(app, PopupRequest.from(app, in));
                 }
                 break;
             case ACTION_VENDOR_RESET:
                 String disconnected = in.getStringExtra("mac");
-                VENDOR_CACHE.remove(disconnected);
-                if (session != null && session.request.vendorMode && session.request.mac.equals(disconnected)) {
+                if (disconnected == null) return;
+                disconnected = disconnected.toUpperCase(Locale.ROOT);
+                if (!BluetoothAdapter.checkBluetoothAddress(disconnected)) return;
+                long received = SystemClock.elapsedRealtime();
+                long observed = in.getLongExtra("disconnectedElapsedMs", received);
+                if (observed < 0 || observed > received) return;
+                VENDOR_CACHE.disconnect(disconnected, observed);
+                if (LIFECYCLE.cancelPendingVendor(disconnected, observed)) L.i("pending vendor popup cancelled on disconnect");
+                if (session != null && session.request.vendorMode && session.request.mac.equals(disconnected)
+                        && observed >= session.request.connectionElapsedMs) {
                     close("Bluetooth disconnected");
                 }
                 break;
             case ACTION_DISMISS:
                 session = null;
-                generation++;
+                LIFECYCLE.cancel();
                 api.close(api.manager(app));
                 L.i("closed on request");
                 break;
@@ -182,11 +192,11 @@ final class PopupController {
 
         // Anything else starts from a clean manager. The manager keeps mData after a popup was closed by
         // hand, and with stale mData it neither rebinds nor shows: that is why a second popup never came.
-        final int gen = ++generation;
+        final int gen = LIFECYCLE.begin(request.vendorMode ? request.mac : null, request.connectionElapsedMs);
         session = null;
         if (data != null || bound) api.reset(manager);
         Runnable task = () -> {
-            if (gen == generation) open(app, manager, request, gen);
+            if (LIFECYCLE.isCurrent(gen)) open(app, manager, request, gen);
         };
         if (bound) MAIN.postDelayed(task, REBIND_DELAY_MS);
         else task.run();
@@ -194,6 +204,9 @@ final class PopupController {
 
     private static void open(Application app, Object manager, PopupRequest request, int gen) {
         try {
+            if (request.vendorMode) {
+                request = request.withVendorBattery(VENDOR_CACHE.get(request.mac, SystemClock.elapsedRealtime()));
+            }
             DeviceBean bean = DeviceBean.create(api, app, request);
             if (bean == null) return;
             api.push(manager, bean.raw);
@@ -205,12 +218,15 @@ final class PopupController {
             session = new Session(manager, bean, data, request);
             L.i("shown: " + request);
             if (request.timeoutSec > 0) {
+                final int timeout = request.timeoutSec;
                 MAIN.postDelayed(() -> {
-                    if (gen == generation) close("timeout " + request.timeoutSec + " s");
-                }, request.timeoutSec * 1000L);
+                    if (LIFECYCLE.isCurrent(gen)) close("timeout " + timeout + " s");
+                }, timeout * 1000L);
             }
         } catch (Throwable t) {
             L.e("could not show " + request, t);
+        } finally {
+            LIFECYCLE.opened(gen);
         }
     }
 
@@ -236,10 +252,10 @@ final class PopupController {
     }
 
     private static void playConnect(Session s) throws Exception {
-        final int gen = generation;
+        final int gen = LIFECYCLE.generation();
         setState(s, PopupRequest.STATE_CONNECTING);
         MAIN.postDelayed(() -> {
-            if (gen != generation || session != s) return;
+            if (!LIFECYCLE.isCurrent(gen) || session != s) return;
             try {
                 setState(s, PopupRequest.STATE_CONNECTED);   // the popup closes itself 5 s later
             } catch (Throwable t) {
@@ -259,8 +275,12 @@ final class PopupController {
         Session s = session;
         if (s == null) return;
         session = null;
-        generation++;
+        LIFECYCLE.cancel();
         try {
+            if (api.data(s.manager) != s.data) {
+                L.i("module popup was superseded; automatic close skipped");
+                return;
+            }
             api.close(s.manager);
             L.i("closed: " + why);
         } catch (Throwable t) {

@@ -1,5 +1,25 @@
 # Test report — 2026-11-11
 
+## Current 1.4-dev / code 11
+
+| Check | Result |
+| --- | --- |
+| Origin comparison | Main 2cd100c and development c418bb1 at review start. 1.3-dev changes were local |
+| Preservation | Backup .backups/20261111-182651 and baseline commit 34277e9 |
+| Incoming baseline | 1.3-dev build and 19 existing tests passed |
+| Vendor API evidence | Supplied APK SHA256 matched, four hooked/reflected declarations verified from DEX |
+| Unit tests | 31 passed, 0 failures/errors/skips across metadata, vendor report/cache/event and popup lifecycle suites |
+| Lint | Passed with 0 errors and 4 inherited warnings |
+| Local debug build | Passed, artifacts/AnyBuds-OriginOS-1.4-dev-debug.apk |
+| Local APK SHA256 | c874e0297dd7005eb83f95121b3a4386af670ab2aa436653bb17677755fdc0a1 |
+| APK metadata/signature | aapt confirms 1.4-dev/code 11, min 29/target 34. Debug signing identity is retained |
+| Hosted CI | Pending commit/push |
+| Device acceptance | Pending H01–H06. Earlier user feedback is preserved in docs/TEST_REPORT.md |
+
+The new regression cases cover exclusion of aggregate events, identity/age checks, reports queued before a disconnect, delayed disconnects after newer connections, invalid observations, all-unknown reports and cancellation while the vivo session is still pending.
+
+## Earlier infrastructure and 1.1-dev evidence
+
 | Check | Status / evidence |
 | --- | --- |
 | Local/remote main comparison | Passed: live remote head = local initial `2cd100c` |

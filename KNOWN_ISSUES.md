@@ -1,5 +1,13 @@
 # Known issues and limitations
 
+## Current HeyMelody increment
+
+- Version 1.4-dev supports the supplied HeyMelody 117.6.6/code 117006006. Xposed hook delivery and battery accuracy require user validation.
+- Enco Air2i metadata mode was exercised by the user and produced unknown L/R/case despite aggregate 100. Device feedback is in `docs/TEST_REPORT.md`.
+- HeyMelody's setter receives both aggregate and per-part data. The observer now requires its matching per-part event 1048588/1048589. Runtime pairing across the hooked calls remains a manual acceptance item.
+- Event 1048589 can use vendor cached preferences. Local observation age is bounded to 10 seconds, while source measurement age remains unknown. Case presence remains unavailable.
+- Four inherited lint warnings remain. The complete custom theme/editor system remains planned in DEVELOPMENT_PLAN.md.
+
 ## Existing application
 
 - Vivo internal API assumptions are inherited from comments naming vivo TWS 9.2.41.2; no target APK or user runtime confirmation in this session. Other versions may fail reflection.
@@ -21,4 +29,4 @@
 - `gh` absent locally. Git and GitHub API are the synchronization/CI inspection fallback.
 - Earlier restricted runs required elevated Gradle cache/network access. The current session has full access. SDK/cache files stay ignored.
 
-Record user-reported problems with APK hash, exact OS/vivo/earbud versions, reproduction and expected/actual behavior. No user device results received yet.
+Record user-reported problems with APK hash, exact OS/vivo/earbud versions, reproduction and expected/actual behavior. Preserve the device feedback in `docs/TEST_REPORT.md` separately from build evidence in the root TEST_REPORT.md.

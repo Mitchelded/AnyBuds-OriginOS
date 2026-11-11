@@ -106,13 +106,14 @@ final class BtWatcher extends BroadcastReceiver {
                 shownAt.remove(address);
                 ctx.sendBroadcast(new Intent(PopupController.ACTION_VENDOR_RESET)
                         .setComponent(new ComponentName(VivoApi.PACKAGE, VivoApi.TRIGGER_RECEIVER))
-                        .putExtra("mac", address));
+                        .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES | Intent.FLAG_RECEIVER_FOREGROUND)
+                        .putExtra("mac", address).putExtra("disconnectedElapsedMs", now));
                 return;
             }
 
             if (BATTERY_CHANGED.equals(in.getAction())) {
                 if (last != null && now - last < BATTERY_FOLLOW_UP_MS) {
-                    request(ctx, device, in.getIntExtra(EXTRA_BATTERY, -1), true);
+                    request(ctx, device, in.getIntExtra(EXTRA_BATTERY, -1), true, last);
                 }
                 return;
             }
@@ -121,14 +122,14 @@ final class BtWatcher extends BroadcastReceiver {
             shownAt.put(address, now);
             main.postDelayed(() -> {
                 Long current = shownAt.get(address);
-                if (current != null && current == now) request(ctx, device, batteryOf(device), false);
+                if (current != null && current == now) request(ctx, device, batteryOf(device), false, now);
             }, SETTLE_MS);
         } catch (Throwable t) {
             L.e("Bluetooth watcher", t);
         }
     }
 
-    private static void request(Context ctx, BluetoothDevice device, int battery, boolean updateOnly) {
+    private static void request(Context ctx, BluetoothDevice device, int battery, boolean updateOnly, long connectionAt) {
         try {
             boolean vendor = "heymelody".equals(Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE));
             // Aggregate changes must not erase vendor reports or keep old cache values alive.
@@ -144,6 +145,7 @@ final class BtWatcher extends BroadcastReceiver {
                     .putExtra("right", level)
                     .putExtra("box", -1)
                     .putExtra("update", updateOnly);
+            show.putExtra("connectionElapsedMs", connectionAt);
             if (vendor) {
                 show.putExtra("left", -1).putExtra("right", -1).putExtra("vendorMode", true);
                 L.i("source=heymelody_waiting; opening popup independently of vendor reports");

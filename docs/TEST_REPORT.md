@@ -33,3 +33,11 @@ Conclusion: the metadata-only approach does not supply the required Enco Air2i d
 User reports no popup after the HeyMelody integration. No log supplied with that report; requested TwsPopup logs after opening HeyMelody and reconnecting. Code inspection confirms 1.2-dev suppresses every Bluetooth request in heymelody mode, making all opening depend on a usable vendor callback. Actual cause of missing vendor delivery remains unconfirmed (hook loading, event timing/connection guard, filter or transport).
 
 1.3-dev restores Bluetooth-owned opening with unknown fields while vendor reports update only matching open popups. A 10-second delivery cache handles reports arriving before opening. Added callback/filter/transport diagnostics and cancellation/cache clearing on ACL disconnect. Battery accuracy and on-device behavior remain pending user validation.
+
+## Review continuation with 1.4-dev
+
+Remote heads were unchanged at review time. The local 1.3-dev work was backed up and preserved in commit `34277e9`. Its build and existing 19 tests passed.
+
+Source inspection found that HeyMelody's aggregate Android callback also reaches setBatteryInfo as type 1. Version 1.4-dev gates forwarding on the paired per-part BluetoothReceiveData event. It also cancels pending vivo opens on disconnect and keeps disconnect cutoffs to reject queued earlier observations. These findings explain concrete code paths. The user's actual missing-delivery cause remains unconfirmed until new logs arrive.
+
+Local 1.4-dev validation passed with 31 JVM tests, 0 failures/errors/skips, lint with 0 errors and 4 existing warnings, and a debug build. User tests H01–H06 are pending. Final APK checksum is recorded in the root TEST_REPORT.md.

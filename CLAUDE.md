@@ -15,5 +15,7 @@ Read `PROGRESS.md` first to resume. User instructions and `C:/Users/trety/.codex
 - Separate implemented / compiled / automated / user confirmed / untested in all reports. Reflection compiling does not verify the target vendor API.
 - Maintain `DEVELOPMENT_PLAN.md`, `PROGRESS.md`, `TEST_REPORT.md`, `KNOWN_ISSUES.md`, and `docs/MANUAL_TESTS.md`.
 - Version 1.1-dev adds the optional `twspopup_battery_source=metadata` path through BatteryProvider, AndroidMetadataBatteryProvider, MetadataBatteryProvider and BatterySnapshot. Its 8 JVM tests cover the decoder/model. Read `docs/BATTERY_RESEARCH.md` before changing source/freshness semantics.
+- Current 1.4-dev adds the HeyMelody 117.6.6 observer. Its setter input must match the same DeviceInfo object's subsequent BluetoothReceiveData event 1048588 or 1048589. Aggregate event 1048590 is excluded. Read `docs/HEYMELODY_ANALYSIS.md` and `docs/HEYMELODY_TEST.md` before changing that pairing.
+- PopupLifecycle cancels pending vendor opens. VendorBatteryCache retains disconnect cutoffs for up to 16 devices and rejects queued older reports. Android Bluetooth events own popup opening and closing. User feedback for Enco Air2i and the metadata failure is recorded in `docs/TEST_REPORT.md`.
 
 Architecture and inherited assumptions: `docs/TECHNICAL_AUDIT.md`. Build setup and CI: `docs/BUILD.md`.

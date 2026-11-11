@@ -1,12 +1,22 @@
 # Progress — 2026-11-11
 
-## Latest correction: 1.3-dev (code 10)
+## Current review and continuation — 1.4-dev / code 11
+
+Live GitHub comparison and fetch found origin main at `2cd100c` and development at `c418bb1`. New 1.2/1.3 work existed locally and was uncommitted. Backup `.backups/20261111-182651` preserves source, attachments and Git history. Incoming 1.3-dev passed its 19 tests and build and was preserved as commit `34277e9`. Private attachment folders are ignored.
+
+Reviewed the new hook, report/cache classes, popup changes, tests, device feedback and supplied HeyMelody 117.6.6 APK. Found that setBatteryInfo also receives aggregate data as type 1. Version 1.4-dev correlates its copied input with BluetoothReceiveData events 1048588/1048589 and excludes aggregate 1048590. All hook/getter signatures were confirmed directly in DEX. The removed vendor connection-flag guard allows a report that precedes that flag to reach the short delivery cache. Android Bluetooth owns opening/closing.
+
+Fixed disconnect cancellation during the vivo rebind delay, rejection of reports observed before a disconnect and protection of newer connections from delayed reset events. Cache entries are checked again when rendering starts. Zero/invalid vendor levels, invalid charging masks, negative timestamps and all-unknown reports are handled explicitly.
+
+Local validation passed with 31 tests, 0 failures/errors/skips, lint with 0 errors and 4 inherited warnings, and a debug build. Local APK `artifacts/AnyBuds-OriginOS-1.4-dev-debug.apk` has SHA256 `c874e0297dd7005eb83f95121b3a4386af670ab2aa436653bb17677755fdc0a1`. Automatic close checks that the module still owns the manager data before closing. Commit/push and hosted CI verification are next. Hook delivery and accuracy on the user's device are pending. The actual cause of missing vendor delivery has not been confirmed.
+
+## Earlier local correction — 1.3-dev (code 10)
 
 User reports 1.2-dev produces no popup. Logs requested; missing vendor-report cause remains unconfirmed. Code inspection found that 1.2-dev disabled Bluetooth-owned popup opening in heymelody mode. 1.3-dev restores connection-owned opening with unknown fields, while HeyMelody reports only update open matching vendor popups. Added a bounded 10-second delivery cache for reports arriving before opening, expiry/order checks, ACL-disconnect cache clearing and pending-opening cancellation. Added hook/callback/filter/receipt diagnostics. All three scopes are now required for this mode. See `docs/HEYMELODY_TEST.md`.
 
 Local validation: 19 tests passed, zero failures/errors; lint passed with four existing warnings; debug build passed. APK `artifacts/AnyBuds-OriginOS-1.3-dev-debug.apk`, SHA256 `7b3811209a13813077983830b1476ce7425930349d24891f44045604dd1c0715`. Device popup and separate battery delivery remain pending validation. No claim that the missing HeyMelody delivery has been diagnosed. Changes remain local.
 
-## Latest increment: 1.2-dev (code 9)
+## Earlier local increment — 1.2-dev (code 9)
 
 Implemented optional `twspopup_battery_source=heymelody` observer for the user-supplied HeyMelody 117.6.6/code 117006006. Requires additional scope `com.heytap.headset`. Reads separate values and charging from current vendor reports without opening Bluetooth sockets; version-checks, validates parts, filters the selected device, and prevents subsequent reports from reopening closed popups. Full vendor disconnect resets bookkeeping. Aggregate/metadata automatic requests are suppressed in this mode. No measurement freshness or case-presence claim. See `docs/HEYMELODY_TEST.md`.
 
@@ -16,13 +26,13 @@ Latest user feedback after reboot confirms metadata provider execution: L/R/case
 
 Source setting `metadata` and installed version 1.1-dev/code 8 are confirmed. Before reboot logs lacked metadata snapshots; after reboot snapshots appeared, consistent with previously stale loaded code. User-supplied HeyMelody 117.6.6 was inspected offline; per-part vendor battery parsing and multiple transport paths were identified in `docs/HEYMELODY_ANALYSIS.md`. Vendor integration remains unimplemented and is needed for further progress on separate battery readings.
 
-## Current status
+## Earlier 1.1-dev milestone
 
 Audit and build infrastructure are verified locally and in GitHub Actions. Optional Android metadata battery provider is implemented in version `1.1-dev` / code 8 and pushed as commit `f6d2a5d`. Local and hosted builds, lint and all 8 tests passed. CI APK checksum, package/version/SDK and signature were inspected. Current increment awaits the user's manual device feedback.
 
 Documentation commit `9c6a233`, infrastructure commit `67a7891` and CI correction `1f01e90` are pushed. Hosted run `42968355430` succeeded. Its APK and reports artifacts exist. Downloaded baseline APK SHA256 is `f098a36768e97c546a83a2c1b7c2556665e8bb336f5ad2d83ec0d35016af54d3`, signature verified with the existing certificate. First failed run `42968041422` requested removed SDK package `tools`, corrected through explicit packages and current Actions on Ubuntu 24.04.
 
-## Completed
+## Earlier completed work through 1.1-dev
 
 - Live remote main matches initial local `2cd100c`; no tracked user edits. Preserved untracked `.claude` settings.
 - Private backup `.backups/20261111-082241/` (Git bundle, working ZIP, status and checksums).
@@ -39,7 +49,7 @@ Documentation commit `9c6a233`, infrastructure commit `67a7891` and CI correctio
 - Downloaded CI 1.1-dev APK is `artifacts/ci-42969045913-AnyBuds-OriginOS-1.1-dev-debug.apk`, SHA256 `b8b3e48fcf02cb2c3ed2980ec10899ea3715c62d595ab80424867e1ac502762e`. Certificate matches baseline.
 - Latest pre-provider backup `.backups/20261111-084831/` passed bundle verification, checksums and ZIP integrity. Local settings and original debug keystore entries are present.
 
-## Important findings
+## Historical findings from the 1.1-dev audit
 
 - Existing popup is entirely vivo-rendered. Existing L/R/case display setters do not acquire measurements.
 - Default auto source duplicates aggregate Bluetooth battery into L/R. Optional metadata source preserves unknown parts and reads separate cached values. Updates remain limited to existing events within 20 seconds after connection.
@@ -55,7 +65,7 @@ Documentation commit `9c6a233`, infrastructure commit `67a7891` and CI correctio
 
 ## Remaining and exact next steps
 
-1. Await user testing of 1.1-dev using `docs/MANUAL_TESTS.md`. Use the baseline/default source first, then metadata mode and each single bud. Enable with `settings put global twspopup_battery_source metadata` in the user's terminal, reconnect, compare with the vendor app and record diagnostics. Clear with `settings delete global twspopup_battery_source`.
-2. Record the exact earbud model, OriginOS/vivo versions, APK hash and actual pass/fail results. Vendor APK paths remain requested from the user. No device acceptance has been recorded.
-3. Trace HeyMelody/vivo protocols from actual supplied APKs, improve disconnect lifecycle and metadata updates/freshness using confirmed findings.
+1. Review the 1.4-dev diff, commit, push the development branch and verify hosted tests/APK artifacts.
+2. Supply 1.4-dev for user scenarios H01–H06 in docs/HEYMELODY_TEST.md with all three scopes. Await logs showing accepted event IDs, report receipt and popup shown/updated. Record actual device/OriginOS/vivo versions and results in docs/TEST_REPORT.md. The supplied Enco Air2i metadata failure already provides enough evidence to move beyond repeating metadata tests.
+3. If delivery still fails, use the first missing diagnostic stage to narrow the exact runtime issue. Trace additional vendor paths from the supplied APK only where the logs and source justify them. Measurement age and case presence remain unresolved.
 4. Implement isolated custom theme system in `DEVELOPMENT_PLAN.md` order, carrying forward actual device findings.
