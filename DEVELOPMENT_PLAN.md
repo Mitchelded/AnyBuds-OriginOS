@@ -18,7 +18,7 @@
 
 ## 3. Battery acquisition
 
-The first optional Android metadata provider is implemented in `1.1-dev`. Eight pure JVM tests and local lint/build passed. Hosted provider checks and user acceptance are pending. Vendor APK tracing, freshness/listener lifecycle and case-presence acquisition remain open.
+The first optional Android metadata provider is implemented in `1.1-dev`, commit `f6d2a5d`. Eight pure JVM tests, lint and builds passed locally and in hosted run 42969045913. The downloaded hosted APK and test reports were inspected. User acceptance, vendor APK tracing, freshness/listener lifecycle and case-presence acquisition remain open.
 
 1. Obtain exact target earbud model plus existing HeyMelody/vivo TWS APK paths and hashes; inspect offline without phone access.
 2. Trace vivo bean values back through BLE advertisements, Bluetooth metadata, Binder and native code. Trace HeyMelody protocol/transport separately. Record concrete class/method names, version and evidence.

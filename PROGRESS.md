@@ -2,7 +2,7 @@
 
 ## Current status
 
-Audit and build infrastructure are verified locally and in GitHub Actions. Optional Android metadata battery provider is implemented in version `1.1-dev` / code 8. Eight unit tests, local lint and APK build passed. Provider commit/push and hosted checks are next. User device results remain pending.
+Audit and build infrastructure are verified locally and in GitHub Actions. Optional Android metadata battery provider is implemented in version `1.1-dev` / code 8 and pushed as commit `f6d2a5d`. Local and hosted builds, lint and all 8 tests passed. CI APK checksum, package/version/SDK and signature were inspected. Current increment awaits the user's manual device feedback.
 
 Documentation commit `9c6a233`, infrastructure commit `67a7891` and CI correction `1f01e90` are pushed. Hosted run `42968355430` succeeded. Its APK and reports artifacts exist. Downloaded baseline APK SHA256 is `f098a36768e97c546a83a2c1b7c2556665e8bb336f5ad2d83ec0d35016af54d3`, signature verified with the existing certificate. First failed run `42968041422` requested removed SDK package `tools`, corrected through explicit packages and current Actions on Ubuntu 24.04.
 
@@ -19,6 +19,9 @@ Documentation commit `9c6a233`, infrastructure commit `67a7891` and CI correctio
 - Two MissingPermission lint errors addressed only on Bluetooth-host name lookup using a documented method annotation. Four existing lint warnings remain visible.
 - Added immutable snapshots, provider interface, independent AOSP metadata decoding, runtime getter resolution and optional BtWatcher integration through `twspopup_battery_source=metadata`.
 - Provider tests cover partial/empty/invalid data, unknown charging, API errors and device isolation. All 8 passed. Local 1.1-dev APK SHA256 is `2fea300791e587f312a8dee3b79e822210edcb21e3db137b12d9aa7657d02c75`.
+- Provider CI run https://github.com/Mitchelded/AnyBuds-OriginOS/actions/runs/42969045913 succeeded. Downloaded XML confirms 8 tests with 0 failures/errors/skips. APK artifact ID is `13832282188`, reports ID is `13832745845`.
+- Downloaded CI 1.1-dev APK is `artifacts/ci-42969045913-AnyBuds-OriginOS-1.1-dev-debug.apk`, SHA256 `b8b3e48fcf02cb2c3ed2980ec10899ea3715c62d595ab80424867e1ac502762e`. Certificate matches baseline.
+- Latest pre-provider backup `.backups/20261111-084831/` passed bundle verification, checksums and ZIP integrity. Local settings and original debug keystore entries are present.
 
 ## Important findings
 
@@ -36,7 +39,7 @@ Documentation commit `9c6a233`, infrastructure commit `67a7891` and CI correctio
 
 ## Remaining and exact next steps
 
-1. Review provider diff and documentation, commit and push without force, inspect hosted tests and download/check resulting artifact.
-2. Supply 1.1-dev APK and manual scenarios for user comparison. Exact earbud model, OriginOS/vivo versions and vendor APK paths remain requested from the user. Wait for feedback as required by the user's iterative workflow.
+1. Await user testing of 1.1-dev using `docs/MANUAL_TESTS.md`. Use the baseline/default source first, then metadata mode and each single bud. Enable with `settings put global twspopup_battery_source metadata` in the user's terminal, reconnect, compare with the vendor app and record diagnostics. Clear with `settings delete global twspopup_battery_source`.
+2. Record the exact earbud model, OriginOS/vivo versions, APK hash and actual pass/fail results. Vendor APK paths remain requested from the user. No device acceptance has been recorded.
 3. Trace HeyMelody/vivo protocols from actual supplied APKs, improve disconnect lifecycle and metadata updates/freshness using confirmed findings.
 4. Implement isolated custom theme system in `DEVELOPMENT_PLAN.md` order, carrying forward actual device findings.

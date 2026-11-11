@@ -14,5 +14,6 @@ Read `PROGRESS.md` first to resume. User instructions and `C:/Users/trety/.codex
 - No ADB, phone connection, installation, emulator, or automated device tests. User performs all device checks.
 - Separate implemented / compiled / automated / user confirmed / untested in all reports. Reflection compiling does not verify the target vendor API.
 - Maintain `DEVELOPMENT_PLAN.md`, `PROGRESS.md`, `TEST_REPORT.md`, `KNOWN_ISSUES.md`, and `docs/MANUAL_TESTS.md`.
+- Version 1.1-dev adds the optional `twspopup_battery_source=metadata` path through BatteryProvider, AndroidMetadataBatteryProvider, MetadataBatteryProvider and BatterySnapshot. Its 8 JVM tests cover the decoder/model. Read `docs/BATTERY_RESEARCH.md` before changing source/freshness semantics.
 
 Architecture and inherited assumptions: `docs/TECHNICAL_AUDIT.md`. Build setup and CI: `docs/BUILD.md`.
