@@ -1,6 +1,6 @@
 # Manual device tests
 
-All device tests are performed personally by the user. Developer does not connect to the phone, install APKs, run ADB or automate device tests. Every result below is currently **NOT TESTED**.
+All device tests are performed personally by the user. Developer does not connect to the phone, install APKs, run ADB or automate device tests. Initial battery comparison feedback is recorded in `TEST_REPORT.md`: separate L/R and case accuracy failed, active loaded source is unresolved. Table rows below remain pending complete scenario-specific evidence.
 
 ## Record before testing
 

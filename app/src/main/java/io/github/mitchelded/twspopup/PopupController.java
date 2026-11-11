@@ -5,6 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
+import android.bluetooth.BluetoothAdapter;
+import android.provider.Settings;
+import java.util.Locale;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -26,6 +30,9 @@ final class PopupController {
     static final String ACTION_SHOW = ACTION_PREFIX + "SHOW";
     static final String ACTION_DISMISS = ACTION_PREFIX + "DISMISS";
     static final String ACTION_LIST = ACTION_PREFIX + "LIST";
+    static final String ACTION_VENDOR = ACTION_PREFIX + "VENDOR_BATTERY";
+    static final String ACTION_VENDOR_RESET = ACTION_PREFIX + "VENDOR_RESET";
+    private static final VendorBatteryCache VENDOR_CACHE = new VendorBatteryCache();
 
     /** Click codes the popup sends back to the manager. */
     private static final int CLICK_CLOSE = 1;   // X, tap outside, or the popup's own timeout
@@ -99,7 +106,44 @@ final class PopupController {
         Application app = (Application) ctx.getApplicationContext();
         switch (action) {
             case ACTION_SHOW:
+                if (in.getBooleanExtra("vendorMode", false)) {
+                    VendorBatteryCache.Entry cached = VENDOR_CACHE.get(
+                            in.getStringExtra("mac"), SystemClock.elapsedRealtime());
+                    if (cached != null) applyVendor(in, cached);
+                    L.i(cached == null ? "HeyMelody popup: waiting for vendor report"
+                            : "HeyMelody popup: using recent observed report");
+                }
                 show(app, PopupRequest.from(app, in));
+                break;
+            case ACTION_VENDOR:
+                if (!"heymelody".equals(Settings.Global.getString(app.getContentResolver(),
+                        BtWatcher.KEY_BATTERY_SOURCE))) return;
+                String address = in.getStringExtra("mac");
+                if (address == null) return;
+                address = address.toUpperCase(Locale.ROOT);
+                if (!BluetoothAdapter.checkBluetoothAddress(address)) return;
+                VendorBatteryCache.Entry entry = new VendorBatteryCache.Entry(
+                        in.getLongExtra("observedElapsedMs", -1), in.getIntExtra("left", -1),
+                        in.getIntExtra("right", -1), in.getIntExtra("box", -1),
+                        in.getIntExtra("charging", 0));
+                if (!VENDOR_CACHE.put(address, entry, SystemClock.elapsedRealtime())) {
+                    L.w("HeyMelody report rejected: expired or out of order");
+                    return;
+                }
+                L.i("HeyMelody report received L=" + entry.left + " R=" + entry.right + " case=" + entry.box);
+                // Reports never open a popup. Bluetooth connection events own the window lifecycle.
+                if (session != null && session.request.vendorMode && session.request.mac.equals(address)) {
+                    in.putExtra("mac", address).putExtra("update", true).putExtra("vendorMode", true)
+                            .putExtra("model", session.request.model);
+                    show(app, PopupRequest.from(app, in));
+                }
+                break;
+            case ACTION_VENDOR_RESET:
+                String disconnected = in.getStringExtra("mac");
+                VENDOR_CACHE.remove(disconnected);
+                if (session != null && session.request.vendorMode && session.request.mac.equals(disconnected)) {
+                    close("Bluetooth disconnected");
+                }
                 break;
             case ACTION_DISMISS:
                 session = null;
@@ -113,6 +157,11 @@ final class PopupController {
             default:
                 L.w("unknown action " + action);
         }
+    }
+
+    private static void applyVendor(Intent intent, VendorBatteryCache.Entry entry) {
+        intent.putExtra("left", entry.left).putExtra("right", entry.right)
+                .putExtra("box", entry.box).putExtra("charging", entry.charging);
     }
 
     private static void show(Application app, PopupRequest request) throws Exception {

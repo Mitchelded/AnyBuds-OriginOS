@@ -5,5 +5,7 @@
         <item>com.android.vivo.tws.vivotws</item>
         <!-- optional: only for the automatic popup when chosen earbuds connect -->
         <item>com.android.bluetooth</item>
+        <!-- optional: observed separate battery reports from HeyMelody 117.6.6 -->
+        <item>com.heytap.headset</item>
     </string-array>
 </resources>

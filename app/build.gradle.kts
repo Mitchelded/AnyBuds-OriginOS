@@ -4,7 +4,7 @@ android {
     compileSdk = 34
     defaultConfig {
         applicationId = "io.github.mitchelded.twspopup"
-        minSdk = 29; targetSdk = 34; versionCode = 8; versionName = "1.1-dev"
+        minSdk = 29; targetSdk = 34; versionCode = 10; versionName = "1.3-dev"
     }
     signingConfigs {
         getByName("debug") {

@@ -7,6 +7,8 @@ local.properties
 .tools/
 artifacts/
 .claude/
+.codex-attachments/
+.codex-remote-attachments/
 rtk/
 *.keystore
 *.jks

@@ -41,6 +41,7 @@ final class PopupRequest {
     final boolean firstPair;      // true makes the app treat it as a first connection (feature tour)
     final int timeoutSec;         // 0: the popup's own timing decides
     final boolean updateOnly;     // refresh an open popup, never open a new one (late battery reports)
+    final boolean vendorMode;
     final String title;           // null: the model's name from the app's config
     final String mac;
 
@@ -56,6 +57,7 @@ final class PopupRequest {
         firstPair = flag(x, "first");
         timeoutSec = Math.max(0, number(x, "timeout", 0));
         updateOnly = flag(x, "update");
+        vendorMode = flag(x, "vendorMode");
         title = text(x, "title");
         mac = mac(text(x, "mac"));
     }

@@ -84,6 +84,7 @@ final class BtWatcher extends BroadcastReceiver {
         filter.addAction(HEADSET_STATE);
         filter.addAction(A2DP_STATE);
         filter.addAction(BATTERY_CHANGED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         BtWatcher watcher = new BtWatcher();
         if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(watcher, filter, Context.RECEIVER_EXPORTED);
         else app.registerReceiver(watcher, filter);
@@ -101,6 +102,14 @@ final class BtWatcher extends BroadcastReceiver {
             long now = SystemClock.elapsedRealtime();
             Long last = shownAt.get(address);
 
+            if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(in.getAction())) {
+                shownAt.remove(address);
+                ctx.sendBroadcast(new Intent(PopupController.ACTION_VENDOR_RESET)
+                        .setComponent(new ComponentName(VivoApi.PACKAGE, VivoApi.TRIGGER_RECEIVER))
+                        .putExtra("mac", address));
+                return;
+            }
+
             if (BATTERY_CHANGED.equals(in.getAction())) {
                 if (last != null && now - last < BATTERY_FOLLOW_UP_MS) {
                     request(ctx, device, in.getIntExtra(EXTRA_BATTERY, -1), true);
@@ -110,7 +119,10 @@ final class BtWatcher extends BroadcastReceiver {
             if (in.getIntExtra(BluetoothProfile.EXTRA_STATE, -1) != BluetoothProfile.STATE_CONNECTED) return;
             if (last != null && now - last < SAME_CONNECTION_MS) return;
             shownAt.put(address, now);
-            main.postDelayed(() -> request(ctx, device, batteryOf(device), false), SETTLE_MS);
+            main.postDelayed(() -> {
+                Long current = shownAt.get(address);
+                if (current != null && current == now) request(ctx, device, batteryOf(device), false);
+            }, SETTLE_MS);
         } catch (Throwable t) {
             L.e("Bluetooth watcher", t);
         }
@@ -118,6 +130,9 @@ final class BtWatcher extends BroadcastReceiver {
 
     private static void request(Context ctx, BluetoothDevice device, int battery, boolean updateOnly) {
         try {
+            boolean vendor = "heymelody".equals(Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE));
+            // Aggregate changes must not erase vendor reports or keep old cache values alive.
+            if (vendor && updateOnly) return;
             int level = battery < 0 ? -1 : battery;   // Android has one level for the pair; the case is unknown
             Intent show = new Intent(PopupController.ACTION_SHOW)
                     .setComponent(new ComponentName(VivoApi.PACKAGE, VivoApi.TRIGGER_RECEIVER))
@@ -129,6 +144,10 @@ final class BtWatcher extends BroadcastReceiver {
                     .putExtra("right", level)
                     .putExtra("box", -1)
                     .putExtra("update", updateOnly);
+            if (vendor) {
+                show.putExtra("left", -1).putExtra("right", -1).putExtra("vendorMode", true);
+                L.i("source=heymelody_waiting; opening popup independently of vendor reports");
+            }
             if ("metadata".equals(Settings.Global.getString(ctx.getContentResolver(), KEY_BATTERY_SOURCE))) {
                 BatterySnapshot snapshot = METADATA_BATTERY.read(device, battery, SystemClock.elapsedRealtime());
                 show.putExtra("left", snapshot.left.percent)

@@ -1,5 +1,21 @@
 # Progress — 2026-11-11
 
+## Latest correction: 1.3-dev (code 10)
+
+User reports 1.2-dev produces no popup. Logs requested; missing vendor-report cause remains unconfirmed. Code inspection found that 1.2-dev disabled Bluetooth-owned popup opening in heymelody mode. 1.3-dev restores connection-owned opening with unknown fields, while HeyMelody reports only update open matching vendor popups. Added a bounded 10-second delivery cache for reports arriving before opening, expiry/order checks, ACL-disconnect cache clearing and pending-opening cancellation. Added hook/callback/filter/receipt diagnostics. All three scopes are now required for this mode. See `docs/HEYMELODY_TEST.md`.
+
+Local validation: 19 tests passed, zero failures/errors; lint passed with four existing warnings; debug build passed. APK `artifacts/AnyBuds-OriginOS-1.3-dev-debug.apk`, SHA256 `7b3811209a13813077983830b1476ce7425930349d24891f44045604dd1c0715`. Device popup and separate battery delivery remain pending validation. No claim that the missing HeyMelody delivery has been diagnosed. Changes remain local.
+
+## Latest increment: 1.2-dev (code 9)
+
+Implemented optional `twspopup_battery_source=heymelody` observer for the user-supplied HeyMelody 117.6.6/code 117006006. Requires additional scope `com.heytap.headset`. Reads separate values and charging from current vendor reports without opening Bluetooth sockets; version-checks, validates parts, filters the selected device, and prevents subsequent reports from reopening closed popups. Full vendor disconnect resets bookkeeping. Aggregate/metadata automatic requests are suppressed in this mode. No measurement freshness or case-presence claim. See `docs/HEYMELODY_TEST.md`.
+
+Final local checks: 16 JVM tests passed (0 failures/errors/skips); lint passed with the same four existing warnings. Debug build succeeded. APK `artifacts/AnyBuds-OriginOS-1.2-dev-debug.apk`, SHA256 `35dee9d764bab760bd55c0b7d765f632cab91416ba03118bff5daf26faa75698`. aapt confirms code 9/version 1.2-dev/min 29/target 34; apksigner verifies v2 signature. Device validation is still pending. Changes are local; this increment has not been pushed or verified in hosted CI.
+
+Latest user feedback after reboot confirms metadata provider execution: L/R/case all unknown, aggregate 100, failedReads=0. Popup correctly renders the supplied unknowns as `--`; metadata does not supply usable separate battery data for this tested Enco Air2i setup. Earlier aggregate popup showed 90/90/case unknown against vendor 90/100/case 100. Battery accuracy acceptance failed. See `docs/TEST_REPORT.md`. Other manual scenarios remain unconfirmed.
+
+Source setting `metadata` and installed version 1.1-dev/code 8 are confirmed. Before reboot logs lacked metadata snapshots; after reboot snapshots appeared, consistent with previously stale loaded code. User-supplied HeyMelody 117.6.6 was inspected offline; per-part vendor battery parsing and multiple transport paths were identified in `docs/HEYMELODY_ANALYSIS.md`. Vendor integration remains unimplemented and is needed for further progress on separate battery readings.
+
 ## Current status
 
 Audit and build infrastructure are verified locally and in GitHub Actions. Optional Android metadata battery provider is implemented in version `1.1-dev` / code 8 and pushed as commit `f6d2a5d`. Local and hosted builds, lint and all 8 tests passed. CI APK checksum, package/version/SDK and signature were inspected. Current increment awaits the user's manual device feedback.

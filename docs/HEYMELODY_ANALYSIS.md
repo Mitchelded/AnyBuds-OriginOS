@@ -1,0 +1,31 @@
+# HeyMelody 117.6.6 — offline battery investigation
+
+## Input and reproducibility
+
+User-supplied `HeyMelody_v117.6.6.apk`, received 2026-11-11. Package `com.heytap.headset`, versionName `117.6.6`, versionCode `117006006` (decoded AndroidManifest.xml).
+
+- Size: 16,482,304 bytes.
+- SHA256: `d0e5a2b2a51c24a17c9f7fcf6485c68a3f3d33c16de60a5351733a9c34b0ada3`.
+- Three DEX files. Native libraries: glide-webp and sqlcipher.
+- JADX 1.5.6 official archive verified against release asset digest `545ea2be9c242511bc145755cf4bda2485ade42966e096f8b4d3da2a230e8974`.
+- Local output: ignored `.tools/heymelody/`. JADX completed with 66 errors; decompiled Java is analysis evidence, not a guarantee that every method was reconstructed correctly. No vendor code/assets are added to the module.
+
+## Concrete findings
+
+Paths and line numbers below refer to this local JADX output, with its default renamed package directories.
+
+1. `com/oplus/melody/btsdk/api/data/BatteryInfo.java`: public fields `mDeviceType`, `mLevel`, `mCharging`. Constructor `BatteryInfo(int offset, byte[] data)` reads two bytes: device type, then level in low 7 bits and charging in bit 7. This is a vendor message representation, not the Android aggregate battery API.
+2. `com/oplus/melody/btsdk/protocol/commands/g.java`, `d(int offset, byte[] data)`: reads an unsigned count followed by that many two-byte BatteryInfo records. Rejects zero count and truncated data. Does not establish packet framing/checksum or target-model support by itself.
+3. `com/oplus/melody/btsdk/protocol/commands/j.java` (NotificationCommandManager), `b(String address, int offset, byte[] data, p224p8.a packet)`, lines 86–108 and 364–374: notification type 1 invokes that parser and emits handler message 10 with `Pair(address, batteryList)`. This preserves device identity alongside per-part data.
+4. `com/oplus/melody/model/repository/earphone/N.java`, `g(EarphoneDTO)`, lines 280–294: type 1 = left, 2 = right, 3 = case. Selects vendor/Spp fields or separate headset fields based on `isSupportSpp()`.
+5. `BatteryInfo.fixBatteries` / `fixBattery`: UI values can be rounded using configured battery radix (default 10), with special handling for case value 1. Vendor display percentages therefore need not be raw packet values. Do not copy its zero/unknown convention blindly into our snapshot model.
+6. `A8/c.java`, lines 164–174: transport abstraction uses `BluetoothDevice.createRfcommSocketToServiceRecord(UUID)`. `p349y8/f.java` also implements GATT characteristic lookup, notifications and writes. The APK supports multiple transports; these findings alone do not identify the active Enco Air2i transport.
+7. `com/oplus/melody/btsdk/manager/service/BluetoothService.java`, lines 505–538: another path reads per-part cached preferences, constructs BatteryInfo records and emits internal BluetoothReceiveData. This is not evidence that an external app can bind or read those values.
+
+## Implication and next integration boundary
+
+Separate data exists inside HeyMelody's own pipeline. This does not prove that HeyMelody populates Android metadata keys 10–15. An Android metadata reader alone cannot promise equivalent results.
+
+A candidate integration is an optional, version-checked Xposed observer inside `com.heytap.headset`, receiving already-parsed per-device battery events and passing validated snapshots to the popup. This avoids opening a competing Bluetooth socket, but remains unimplemented. It requires confirming the loaded class/method and active pipeline, restricting updates to the chosen device and an active popup, handling stale/disconnected data, and user acceptance on the exact APK. Independent acquisition would additionally require transport selection, framing, request/response and lifecycle tracing.
+
+Initial investigation produced no APK. A subsequent implementation in 1.2-dev now observes `DeviceInfo.setBatteryInfo(List)` after vendor processing, and the verified private `updateConnected(String)` method for disconnect bookkeeping. These descriptive methods avoid depending on the obfuscated notification manager name. The main-process BluetoothService is confirmed in the supplied manifest (no separate android:process). Forwarding uses the current list rather than the vendor's merged cached list. See `HEYMELODY_TEST.md` for opt-in setup and limitations. No phone connection or automated phone command was performed; device acceptance remains pending.

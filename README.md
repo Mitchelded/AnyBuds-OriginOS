@@ -1,5 +1,10 @@
 # TwsPopup
 
+Experimental **1.3-dev**: separate battery reports observed inside HeyMelody 117.6.6.
+Enable the additional `com.heytap.headset` module scope and follow [the device checklist](docs/HEYMELODY_TEST.md).
+Select with `settings put global twspopup_battery_source heymelody`; HeyMelody must run and receive reports.
+Device compatibility is not yet verified.
+
 ## Development / Разработка
 
 Reproducible builds: Java 17 + Android SDK 34 + the pinned Gradle wrapper.
@@ -9,7 +14,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1
 ```
 
-APK: `artifacts/AnyBuds-OriginOS-1.1-dev-debug.apk` with SHA256. GitHub Actions artifacts:
+APK: `artifacts/AnyBuds-OriginOS-1.3-dev-debug.apk` with SHA256. GitHub Actions artifacts:
 `AnyBuds-OriginOS-<commit SHA>` (APK), `android-reports-<commit SHA>` (reports/logs).
 See [build setup](docs/BUILD.md), [technical audit](docs/TECHNICAL_AUDIT.md),
 [progress](PROGRESS.md), [battery research](docs/BATTERY_RESEARCH.md), and
