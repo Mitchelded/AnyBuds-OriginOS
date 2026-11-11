@@ -1,0 +1,13 @@
+.gradle/
+**/build/
+.idea/
+*.iml
+local.properties
+.backups/
+.tools/
+artifacts/
+.claude/
+rtk/
+*.keystore
+*.jks
+!gradle/wrapper/gradle-wrapper.jar
